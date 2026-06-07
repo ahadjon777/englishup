@@ -16,7 +16,7 @@
             {% endif %}
             <p class="fs-4 mb-1">{{ score }} / {{ total }} to'g'ri ({{ percentage }}%)</p>
             {% if first_time and coins_awarded > 0 %}
-                <div class="coin-badge fs-5 my-2">🪙 +{{ coins_awarded }} coin topdingiz!</div>
+                <div class="coin-badge fs-5 my-2"><i class="fa-solid fa-coins"></i> +{{ coins_awarded }} coin topdingiz!</div>
             {% elif not first_time %}
                 <p class="text-muted">Bu quizni avval yechgansiz — coin faqat birinchi marta beriladi.</p>
             {% endif %}

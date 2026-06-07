@@ -10,7 +10,7 @@
                     <div style="font-size: 4rem;">{{ profile.avatar }}</div>
                     <h4 class="fw-bold mb-1">{{ profile.user.username }}</h4>
                     <p class="text-muted">{{ profile.bio|default:"Ingliz tili o'rganuvchi" }}</p>
-                    <div class="coin-badge fs-5 my-2">🪙 {{ profile.coins }} coin</div>
+                    <div class="coin-badge fs-5 my-2"><i class="fa-solid fa-coins"></i> {{ profile.coins }} coin</div>
                 </div>
             </div>
 
@@ -35,14 +35,14 @@
         <div class="col-md-7">
             <div class="card border-0 shadow-sm" style="border-radius: 20px;">
                 <div class="card-body p-4">
-                    <h6 class="fw-bold mb-3">🪙 Coin tarixi</h6>
+                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-coins"></i> Coin tarixi</h6>
                     {% if transactions %}
                         <ul class="list-group list-group-flush">
                             {% for t in transactions %}
                             <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                                 <span>{{ t.reason|default:"Tranzaksiya" }}<br><small class="text-muted">{{ t.created_at|date:"d M Y, H:i" }}</small></span>
                                 <span class="fw-bold {% if t.amount >= 0 %}text-success{% else %}text-danger{% endif %}">
-                                    {% if t.amount >= 0 %}+{% endif %}{{ t.amount }} 🪙
+                                    {% if t.amount >= 0 %}+{% endif %}{{ t.amount }} <i class="fa-solid fa-coins"></i>
                                 </span>
                             </li>
                             {% endfor %}
