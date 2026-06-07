@@ -97,7 +97,7 @@
             stage.innerHTML = `
                 <div class="card-box flip-card" id="flip">
                     <div id="front">
-                        <div style="font-size:2.5rem;">${card.emoji}</div>
+                        <div style="font-size:4.5rem;">${card.emoji}</div>
                         <div class="prompt">${card.english}</div>
                         <div class="sub">Tarjimani ko'rish uchun bosing 👆</div>
                     </div>
@@ -108,7 +108,7 @@
                 </div>`;
             document.getElementById('flip').onclick = () => {
                 document.getElementById('front').innerHTML =
-                    `<div style="font-size:2.5rem;">${card.emoji}</div>
+                    `<div style="font-size:4.5rem;">${card.emoji}</div>
                      <div class="prompt" style="color:#58CC02;">${card.uzbek}</div>
                      <div class="sub">${card.example || ''}</div>`;
             };
@@ -140,7 +140,7 @@
         else if (MODE === 'write') {
             stage.innerHTML = `
                 <div class="card-box">
-                    <div style="font-size:2rem;">${card.emoji}</div>
+                    <div style="font-size:4rem;">${card.emoji}</div>
                     <div class="prompt" style="color:#58CC02;">${card.uzbek}</div>
                     <div class="sub">✍️ Inglizchasini yozing</div>
                 </div>
@@ -161,6 +161,59 @@
             };
             document.getElementById('checkBtn').onclick = check;
             input.addEventListener('keypress', e => { if (e.key === 'Enter') check(); });
+        }
+        else if (MODE === 'listen') {
+            stage.innerHTML = `
+                <div class="card-box">
+                    <div style="font-size:4rem;">${card.emoji}</div>
+                    <div class="prompt">${card.english}</div>
+                    <div class="sub">🔊 Tinglang va ovoz bilan takrorlang</div>
+                </div>
+                <div class="d-flex gap-2 mt-3">
+                    <button class="btn btn-outline-eng flex-fill" id="listenBtn">🔊 Tinglash</button>
+                    <button class="btn btn-eng flex-fill" id="speakBtn">🎤 Gapirish</button>
+                </div>
+                <div class="text-center mt-2"><button class="btn btn-link text-muted" id="skipListen">O'tkazib yuborish</button></div>`;
+            const speak = () => {
+                if ('speechSynthesis' in window) {
+                    const u = new SpeechSynthesisUtterance(card.english);
+                    u.lang = 'en-US'; u.rate = 0.9;
+                    speechSynthesis.cancel();
+                    speechSynthesis.speak(u);
+                }
+            };
+            speak(); // so'zni avtomatik aytadi
+            document.getElementById('listenBtn').onclick = speak;
+            document.getElementById('skipListen').onclick = () => { sendResult(card.id, false); showNext(); };
+
+            const speakBtn = document.getElementById('speakBtn');
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) {
+                // Brauzer ovoz tanishni qo'llab-quvvatlamasa
+                speakBtn.textContent = "✓ Aytdim";
+                speakBtn.onclick = () => { sendResult(card.id, true); feedback.innerHTML = '✅ Ofarin!'; showNext(); };
+            } else {
+                speakBtn.onclick = () => {
+                    const rec = new SR();
+                    rec.lang = 'en-US'; rec.interimResults = false; rec.maxAlternatives = 3;
+                    feedback.innerHTML = '🎤 Tinglayapman...';
+                    rec.start();
+                    rec.onresult = (e) => {
+                        let said = '';
+                        for (let i = 0; i < e.results[0].length; i++) said += ' ' + e.results[0][i].transcript;
+                        said = said.toLowerCase();
+                        const target = card.english.trim().toLowerCase();
+                        const correct = said.includes(target);
+                        if (correct) feedback.innerHTML = `✅ To'g'ri! ("${e.results[0][0].transcript.trim()}")`;
+                        else feedback.innerHTML = `❌ "${e.results[0][0].transcript.trim()}" — to'g'risi: <b style="color:#58CC02;">${card.english}</b>`;
+                        sendResult(card.id, correct);
+                        showNext();
+                    };
+                    rec.onerror = () => {
+                        feedback.innerHTML = "🎤 Mikrofon ishlamadi. 'O'tkazib yuborish' ni bosing yoki qayta urining.";
+                    };
+                };
+            }
         }
     }
 

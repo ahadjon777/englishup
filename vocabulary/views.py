@@ -16,6 +16,7 @@ MODES = {
     'en_uz':  {'title': "Inglizcha → O'zbekcha",       'icon': '🇬🇧', 'desc': "Inglizcha berilgan, o'zbekchasini tanlang"},
     'uz_en':  {'title': "O'zbekcha → Inglizcha",       'icon': '🇺🇿', 'desc': "O'zbekcha berilgan, inglizchasini tanlang"},
     'write':  {'title': "Yozish (O'zbekcha → Eng)",     'icon': '✍️', 'desc': "O'zbekcha berilgan, inglizchasini yozing"},
+    'listen': {'title': "Tinglab gapirish",            'icon': '🎤', 'desc': "So'z aytiladi, siz ovoz bilan takrorlaysiz"},
 }
 
 

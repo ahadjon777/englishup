@@ -150,3 +150,90 @@ def chatbot(request):
             return JsonResponse({'response': f'Error: {str(e)}'})
 
     return render(request, 'users/chatbot.html')
+
+
+# ---------------------------------------------------------------------------
+# AI Battle — o'quvchi vs AI (vocabulary / grammar)
+# ---------------------------------------------------------------------------
+COINS_PER_BATTLE = 3  # har bir to'g'ri javob uchun
+
+
+@login_required
+def battle(request):
+    return render(request, 'users/battle.html')
+
+
+@csrf_exempt
+@login_required
+def battle_new(request):
+    """AI bitta yangi savol yaratadi (vocabulary yoki grammar)."""
+    try:
+        data = json.loads(request.body)
+        category = data.get('category', 'grammar')
+        if category == 'vocabulary':
+            topic = ("one English vocabulary question for a learner: ask the meaning of a word, "
+                     "or which word fits a sentence, or a synonym/antonym")
+        else:
+            topic = ("one English grammar question for a learner: fill in the blank or choose the correct form, "
+                     "covering tenses, articles, prepositions or similar")
+
+        prompt = (
+            f"Generate {topic}. Keep it short (max 2 sentences). "
+            "Do NOT include the answer. Return ONLY JSON: {\"question\": \"...\"}"
+        )
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You create short English practice questions. Return valid JSON only."},
+                {"role": "user", "content": prompt},
+            ],
+            response_format={"type": "json_object"},
+        )
+        data = json.loads(completion.choices[0].message.content)
+        return JsonResponse({'ok': True, 'question': data.get('question', '')})
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': str(e)})
+
+
+@csrf_exempt
+@login_required
+def battle_check(request):
+    """AI o'quvchi javobini baholaydi va to'g'ri bo'lsa coin beradi."""
+    try:
+        data = json.loads(request.body)
+        question = data.get('question', '')
+        answer = data.get('answer', '')
+
+        prompt = (
+            f"Question: {question}\nStudent's answer: {answer}\n"
+            "Decide if the student's answer is correct for this English question. "
+            "Return ONLY JSON: {\"correct\": true or false, "
+            "\"correct_answer\": \"the correct answer\", "
+            "\"feedback\": \"one short friendly sentence of feedback\"}"
+        )
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are an English teacher grading answers. Return valid JSON only."},
+                {"role": "user", "content": prompt},
+            ],
+            response_format={"type": "json_object"},
+        )
+        result = json.loads(completion.choices[0].message.content)
+        correct = bool(result.get('correct'))
+
+        awarded = 0
+        if correct:
+            request.user.profile.add_coins(COINS_PER_BATTLE, "AI Battle: to'g'ri javob")
+            awarded = COINS_PER_BATTLE
+
+        return JsonResponse({
+            'ok': True,
+            'correct': correct,
+            'correct_answer': result.get('correct_answer', ''),
+            'feedback': result.get('feedback', ''),
+            'awarded': awarded,
+            'coins': request.user.profile.coins,
+        })
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': str(e)})
