@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EnglishUp - {{ lesson.title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f9f0; font-family: 'Segoe UI', sans-serif; }
+        .lesson-header {
+            background: linear-gradient(135deg, #58CC02 0%, #2d8a00 100%);
+            color: white;
+            padding: 50px 20px;
+            text-align: center;
+        }
+        .level-pill {
+            background: rgba(255,255,255,0.25);
+            border-radius: 50px;
+            padding: 6px 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        .progress-section {
+            background: white;
+            padding: 12px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .progress { height: 10px; border-radius: 10px; background: #e8e8e8; }
+        .progress-bar { background: #58CC02; border-radius: 10px; }
+        .outer-col {
+            display: flex;
+            flex-direction: column;
+        }
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .grammar-rows {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .grammar-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            flex: 1;
+        }
+        .section-head {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-head .icon {
+            background: #58CC02;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .grammar-block {
+            border-radius: 14px;
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .grammar-block.green { background: #f0fff0; border-left: 4px solid #58CC02; }
+        .grammar-block.blue { background: #f0f8ff; border-left: 4px solid #1cb0f6; }
+        .grammar-block.orange { background: #fff8f0; border-left: 4px solid #ff9600; }
+        .grammar-block.red { background: #fff0f0; border-left: 4px solid #ff4b4b; }
+        .grammar-block h6 { font-weight: 700; margin-bottom: 10px; }
+        .grammar-block.green h6 { color: #2d8a00; }
+        .grammar-block.blue h6 { color: #0a8fd4; }
+        .grammar-block.orange h6 { color: #cc7700; }
+        .grammar-block.red h6 { color: #cc0000; }
+        .grammar-block p { font-size: 0.92rem; line-height: 1.8; margin: 0; }
+        .right-col {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .examples-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            flex: 1;
+        }
+        .example-item {
+            background: #f8fff8;
+            border-radius: 12px;
+            padding: 12px 18px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: transform 0.2s;
+        }
+        .example-item:hover { transform: translateX(5px); }
+        .example-num {
+            background: #58CC02;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+        .ai-practice {
+            background: linear-gradient(135deg, #1cb0f6, #0a8fd4);
+            border-radius: 20px;
+            padding: 30px;
+            color: white;
+            text-align: center;
+        }
+        .btn-ai {
+            background: white;
+            color: #1cb0f6;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 35px;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .btn-ai:hover { transform: scale(1.05); color: #1cb0f6; }
+        .back-btn {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            padding: 8px 20px;
+            color: #666;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin: 20px 0;
+        }
+        .back-btn:hover { border-color: #58CC02; color: #58CC02; }
+        .two-col {
+            display: grid;
+            grid-template-columns: 7fr 5fr;
+            gap: 20px;
+            align-items: stretch;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="lesson-header">
+        <div class="level-pill">{{ lesson.level.code }} — {{ lesson.level.name }}</div>
+        <h1 class="fw-bold mb-2">{{ lesson.title }}</h1>
+        <p class="mb-0" style="opacity:0.85;">{{ lesson.description }}</p>
+    </div>
+
+    <div class="progress-section">
+        <div class="d-flex justify-content-between mb-1">
+            <small class="text-muted">Lesson Progress</small>
+            <small class="text-success fw-bold">In Progress</small>
+        </div>
+        <div class="progress">
+            <div class="progress-bar" style="width: 35%"></div>
+        </div>
+    </div>
+
+    <div class="container py-4" style="max-width: 1100px;">
+
+        <a href="/lessons/{{ lesson.level.code }}/" class="back-btn">← Back to Lessons</a>
+
+        <div class="two-col">
+
+            <!-- LEFT: Grammar -->
+            <div class="outer-col">
+                {% if lesson.grammar_explanation %}
+                <div class="main-card">
+                    <div class="section-head">
+                        <div class="icon">📖</div> Grammar Explanation
+                    </div>
+                    <div class="grammar-rows">
+                        <div class="grammar-block green">
+                            <h6>📌 When to use</h6>
+                            <p>{{ lesson.grammar_explanation|truncatewords:40 }}</p>
+                        </div>
+                        <div class="grammar-row-2">
+                            <div class="grammar-block blue">
+                                <h6>✅ Positive</h6>
+                                <p>I/You/We/They + verb<br>He/She/It + verb + s/es</p>
+                            </div>
+                            <div class="grammar-block orange">
+                                <h6>❌ Negative</h6>
+                                <p>I/You/We/They + don't + verb<br>He/She/It + doesn't + verb</p>
+                            </div>
+                            <div class="grammar-block red">
+                                <h6>❓ Question</h6>
+                                <p>Do + I/You/We/They + verb?<br>Does + He/She/It + verb?</p>
+                            </div>
+                            <div class="grammar-block green">
+                                <h6>⚠️ Common Mistakes</h6>
+                                <p>❌ She work every day.<br>✅ She works every day.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- RIGHT: Examples + AI -->
+            <div class="right-col">
+                {% if lesson.examples %}
+                <div class="examples-card">
+                    <div class="section-head">
+                        <div class="icon">✏️</div> Examples
+                    </div>
+                    {% for example in lesson.examples.splitlines %}
+                        {% if example %}
+                        <div class="example-item">
+                            <div class="example-num">{{ forloop.counter }}</div>
+                            <div>{{ example }}</div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="ai-practice">
+                    <div style="font-size: 2.5rem;">🤖</div>
+                    <h5 class="fw-bold mt-2">Practice with AI!</h5>
+                    <p style="opacity:0.85;" class="mb-3">AI corrects your mistakes and explains why!</p>
+                    <a href="/users/chatbot/" class="btn btn-ai">Start AI Practice →</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
