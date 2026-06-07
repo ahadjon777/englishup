@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}EnglishUp - Ingliz tilini o'rganing{% endblock %}
+{% block extra_css %}
+<style>
+    .hero {
+        background: linear-gradient(135deg, #58CC02 0%, #2d8a00 100%);
+        color: #fff; padding: 70px 20px; text-align: center; border-radius: 0 0 30px 30px;
+    }
+    .feature-card {
+        background:#fff; border-radius:20px; padding:30px; text-align:center; height:100%;
+        box-shadow:0 4px 20px rgba(0,0,0,0.06); transition:0.2s; text-decoration:none; color:#333; display:block;
+    }
+    .feature-card:hover { transform:translateY(-6px); color:#333; }
+    .feature-icon { font-size:3rem; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="hero">
+    <div style="font-size:4rem;">🦉</div>
+    <h1 class="fw-bold display-5">EnglishUp</h1>
+    <p class="fs-5" style="opacity:0.9;">Ingliz tilini o'yin tarzida o'rganing — dars, quiz, lug'at va AI tutor bilan!</p>
+    {% if user.is_authenticated %}
+        <a href="/lessons/" class="btn btn-light btn-lg fw-bold mt-2" style="color:#58CC02; border-radius:25px;">O'rganishni boshlash →</a>
+    {% else %}
+        <a href="/users/register/" class="btn btn-light btn-lg fw-bold mt-2" style="color:#58CC02; border-radius:25px;">Bepul boshlash 🎁</a>
+    {% endif %}
+</div>
+
+<div class="container py-5">
+    <h2 class="text-center fw-bold mb-5" style="color:#58CC02;">Nimalar o'rganasiz?</h2>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <a href="/lessons/" class="feature-card">
+                <div class="feature-icon">📚</div>
+                <h5 class="fw-bold mt-2">Darslar</h5>
+                <p class="text-muted">A1 dan C2 gacha grammatika va video darsliklar. Video ko'ring, coin oling!</p>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/quiz/" class="feature-card">
+                <div class="feature-icon">❓</div>
+                <h5 class="fw-bold mt-2">Quizlar</h5>
+                <p class="text-muted">Bilimingizni testlar bilan sinang va coin to'plang.</p>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/vocabulary/" class="feature-card">
+                <div class="feature-icon">📖</div>
+                <h5 class="fw-bold mt-2">Lug'at</h5>
+                <p class="text-muted">4 xil usulda so'z yodlang — Duolingo uslubida!</p>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/users/chatbot/" class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h5 class="fw-bold mt-2">AI Tutor</h5>
+                <p class="text-muted">Sun'iy intellekt xatolaringizni tuzatib, suhbatlashadi.</p>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/market/" class="feature-card">
+                <div class="feature-icon">🛍️</div>
+                <h5 class="fw-bold mt-2">Market</h5>
+                <p class="text-muted">To'plagan coinlaringizga stikerlar sotib oling.</p>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card" style="background:#fffbe6;">
+                <div class="feature-icon">🪙</div>
+                <h5 class="fw-bold mt-2">Coin tizimi</h5>
+                <p class="text-muted">Har bir o'rgangan dars, so'z va quiz uchun coin ishlab toping!</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

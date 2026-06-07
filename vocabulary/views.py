@@ -1,3 +1,111 @@
-from django.shortcuts import render
+import json
+import random
 
-# Create your views here.
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+
+from lessons.models import Level
+from .models import Word, WordProgress
+
+# Har bir so'zni birinchi marta to'g'ri bilganda beriladigan coin
+COINS_PER_WORD = 5
+
+MODES = {
+    'study':  {'title': "So'zlarni o'rganish",        'icon': '🃏', 'desc': "Kartochkalar — so'z va tarjimasi"},
+    'en_uz':  {'title': "Inglizcha → O'zbekcha",       'icon': '🇬🇧', 'desc': "Inglizcha berilgan, o'zbekchasini tanlang"},
+    'uz_en':  {'title': "O'zbekcha → Inglizcha",       'icon': '🇺🇿', 'desc': "O'zbekcha berilgan, inglizchasini tanlang"},
+    'write':  {'title': "Yozish (O'zbekcha → Eng)",     'icon': '✍️', 'desc': "O'zbekcha berilgan, inglizchasini yozing"},
+}
+
+
+def vocab_home(request):
+    levels = Level.objects.all()
+    level_data = []
+    for level in levels:
+        count = level.words.count()
+        if count:
+            level_data.append({'level': level, 'count': count})
+    return render(request, 'vocabulary/vocab_home.html', {
+        'level_data': level_data,
+        'modes': MODES,
+    })
+
+
+def _words_for_level(level_code):
+    if level_code == 'all':
+        return list(Word.objects.all())
+    level = get_object_or_404(Level, code=level_code)
+    return list(level.words.all())
+
+
+@login_required
+def practice(request, level_code, mode):
+    if mode not in MODES:
+        return redirect('vocab_home')
+
+    words = _words_for_level(level_code)
+    random.shuffle(words)
+    words = words[:20]  # bir sessiyada 20 ta so'z
+
+    # JS uchun ma'lumot tayyorlaymiz
+    all_uz = [w.uzbek for w in Word.objects.all()]
+    all_en = [w.english for w in Word.objects.all()]
+
+    cards = []
+    for w in words:
+        item = {
+            'id': w.id,
+            'english': w.english,
+            'uzbek': w.uzbek,
+            'example': w.example,
+            'emoji': w.emoji,
+        }
+        if mode == 'en_uz':
+            distractors = random.sample([u for u in all_uz if u != w.uzbek],
+                                        k=min(3, max(0, len(set(all_uz)) - 1)))
+            options = distractors + [w.uzbek]
+            random.shuffle(options)
+            item['options'] = options
+            item['answer'] = w.uzbek
+        elif mode == 'uz_en':
+            distractors = random.sample([e for e in all_en if e != w.english],
+                                        k=min(3, max(0, len(set(all_en)) - 1)))
+            options = distractors + [w.english]
+            random.shuffle(options)
+            item['options'] = options
+            item['answer'] = w.english
+        cards.append(item)
+
+    return render(request, 'vocabulary/practice.html', {
+        'mode': mode,
+        'mode_info': MODES[mode],
+        'level_code': level_code,
+        'cards_json': json.dumps(cards),
+        'coins_per_word': COINS_PER_WORD,
+    })
+
+
+@login_required
+def check_word(request):
+    """AJAX: so'z to'g'ri bilindi -> birinchi marta bo'lsa coin beradi."""
+    if request.method != 'POST':
+        return JsonResponse({'ok': False})
+    data = json.loads(request.body)
+    word_id = data.get('word_id')
+    correct = data.get('correct', False)
+
+    word = get_object_or_404(Word, pk=word_id)
+    progress, _ = WordProgress.objects.get_or_create(user=request.user, word=word)
+
+    awarded = 0
+    if correct:
+        progress.correct_count += 1
+        progress.learned = True
+        if not progress.coins_awarded:
+            request.user.profile.add_coins(COINS_PER_WORD, f"So'z yodlandi: {word.english}")
+            progress.coins_awarded = True
+            awarded = COINS_PER_WORD
+    progress.save()
+
+    return JsonResponse({'ok': True, 'awarded': awarded, 'coins': request.user.profile.coins})

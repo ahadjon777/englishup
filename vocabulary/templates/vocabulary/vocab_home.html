@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Lug'at - EnglishUp{% endblock %}
+{% block extra_css %}
+<style>
+    .mode-card { border:2px solid #e0e0e0; border-radius:16px; padding:16px; cursor:pointer; transition:0.15s; text-decoration:none; color:#333; display:block; height:100%; }
+    .mode-card:hover { border-color:#58CC02; background:#f0fff0; transform:translateY(-3px); }
+    .mode-card.disabled { opacity:0.5; pointer-events:none; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="fw-bold" style="color:#58CC02;">📖 Lug'at</h1>
+        <p class="text-muted">So'zlarni yodlang, har bir yangi so'z uchun coin oling! 🪙</p>
+    </div>
+
+    {% for item in level_data %}
+    <div class="card border-0 shadow-sm mb-4" style="border-radius:20px;">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-1">
+                <span class="badge" style="background:#58CC02;">{{ item.level.code }}</span>
+                {{ item.level.name }}
+                <small class="text-muted fs-6">({{ item.count }} ta so'z)</small>
+            </h4>
+            <div class="row g-3 mt-1">
+                {% for key, m in modes.items %}
+                <div class="col-md-3 col-6">
+                    <a href="/vocabulary/{{ item.level.code }}/{{ key }}/" class="mode-card text-center">
+                        <div style="font-size:2rem;">{{ m.icon }}</div>
+                        <div class="fw-bold mt-1">{{ m.title }}</div>
+                        <small class="text-muted">{{ m.desc }}</small>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="text-center text-muted">
+        <p>Hali so'zlar qo'shilmagan. Admin paneldan so'z qo'shing.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

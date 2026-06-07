@@ -248,9 +248,65 @@
                     <p style="opacity:0.85;" class="mb-3">AI corrects your mistakes and explains why!</p>
                     <a href="/users/chatbot/" class="btn btn-ai">Start AI Practice →</a>
                 </div>
+
+                {% if lesson.youtube_embed_url %}
+                <div class="examples-card">
+                    <div class="section-head">
+                        <div class="icon">🎬</div> Video Lesson
+                    </div>
+                    <div class="ratio ratio-16x9" style="border-radius:12px; overflow:hidden;">
+                        <iframe src="{{ lesson.youtube_embed_url }}" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                    <div class="text-center mt-3">
+                        {% if user.is_authenticated %}
+                            {% if watched %}
+                                <button class="btn btn-outline-eng" id="watchBtn" disabled>✅ Ko'rilgan (coin olingan)</button>
+                            {% else %}
+                                <button class="btn btn-eng" id="watchBtn" data-id="{{ lesson.id }}">🎬 Videoni ko'rdim (+{{ lesson.video_coin_reward }} 🪙)</button>
+                            {% endif %}
+                            <div id="watchMsg" class="mt-2 fw-bold" style="color:#caa300;"></div>
+                        {% else %}
+                            <a href="/users/login/" class="btn btn-outline-eng">Coin olish uchun kiring</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
             </div>
 
         </div>
     </div>
+
+    <script>
+        const watchBtn = document.getElementById('watchBtn');
+        if (watchBtn && !watchBtn.disabled) {
+            watchBtn.addEventListener('click', function () {
+                const id = watchBtn.dataset.id;
+                fetch('/lessons/lesson/' + id + '/watched/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')}
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.ok) {
+                        watchBtn.disabled = true;
+                        watchBtn.textContent = "✅ Ko'rilgan";
+                        if (data.awarded > 0) {
+                            document.getElementById('watchMsg').textContent = '+' + data.awarded + ' 🪙 topdingiz!';
+                        }
+                    }
+                });
+            });
+        }
+        function getCookie(name) {
+            let v = null;
+            if (document.cookie) {
+                document.cookie.split(';').forEach(c => {
+                    c = c.trim();
+                    if (c.startsWith(name + '=')) v = decodeURIComponent(c.substring(name.length + 1));
+                });
+            }
+            return v;
+        }
+    </script>
 </body>
 </html>

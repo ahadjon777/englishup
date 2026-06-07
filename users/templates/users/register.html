@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Ro'yxatdan o'tish - EnglishUp{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width: 440px;">
+    <div class="card border-0 shadow-sm" style="border-radius: 20px;">
+        <div class="card-body p-4 p-md-5">
+            <div class="text-center mb-4">
+                <div style="font-size: 3rem;">🎓</div>
+                <h3 class="fw-bold" style="color:#58CC02;">Ro'yxatdan o'tish</h3>
+                <p class="text-muted">Yangi hisob yarating va <b>50 🪙</b> bonus oling!</p>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Username</label>
+                    <input type="text" name="username" class="form-control form-control-lg" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Parol</label>
+                    <input type="password" name="password" class="form-control form-control-lg" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Parolni takrorlang</label>
+                    <input type="password" name="password2" class="form-control form-control-lg" required>
+                </div>
+                <button type="submit" class="btn btn-eng w-100 btn-lg">Ro'yxatdan o'tish</button>
+            </form>
+            <p class="text-center text-muted mt-3 mb-0">
+                Hisobingiz bormi? <a href="/users/login/" style="color:#58CC02; font-weight:700;">Kiring</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
