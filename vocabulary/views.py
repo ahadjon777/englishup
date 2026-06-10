@@ -12,12 +12,14 @@ from .models import Word, WordProgress
 COINS_PER_WORD = 5
 
 MODES = {
-    'study':  {'title': "So'zlarni o'rganish",        'icon': '🃏', 'desc': "Kartochkalar — so'z va tarjimasi"},
-    'en_uz':  {'title': "Inglizcha → O'zbekcha",       'icon': '🇬🇧', 'desc': "Inglizcha berilgan, o'zbekchasini tanlang"},
-    'uz_en':  {'title': "O'zbekcha → Inglizcha",       'icon': '🇺🇿', 'desc': "O'zbekcha berilgan, inglizchasini tanlang"},
-    'write':  {'title': "Yozish (O'zbekcha → Eng)",     'icon': '✍️', 'desc': "O'zbekcha berilgan, inglizchasini yozing"},
-    'listen': {'title': "Tinglab gapirish",            'icon': '🎤', 'desc': "So'z aytiladi, siz ovoz bilan takrorlaysiz"},
+    'all':    {'title': "To'liq mashq (5 bosqich)", 'icon': '🔥', 'desc': "Barcha bosqich ketma-ket"},
+    'study':  {'title': "So'zlarni o'rganish",        'icon': '🃏', 'desc': "Kartochkalar"},
+    'en_uz':  {'title': "Inglizcha → O'zbekcha",       'icon': '🇬🇧', 'desc': "O'zbekchasini tanlang"},
+    'uz_en':  {'title': "O'zbekcha → Inglizcha",       'icon': '🇺🇿', 'desc': "Inglizchasini tanlang"},
+    'write':  {'title': "Yozish",                       'icon': '✍️', 'desc': "Inglizchasini yozing"},
+    'listen': {'title': "Tinglab gapirish",            'icon': '🎤', 'desc': "Ovoz bilan takrorlang"},
 }
+
 
 
 def vocab_home(request):
@@ -39,7 +41,6 @@ def _words_for_level(level_code):
     level = get_object_or_404(Level, code=level_code)
     return list(level.words.all())
 
-
 @login_required
 def practice(request, level_code, mode):
     if mode not in MODES:
@@ -47,49 +48,35 @@ def practice(request, level_code, mode):
 
     words = _words_for_level(level_code)
     random.shuffle(words)
-    words = words[:20]  # bir sessiyada 20 ta so'z
+    limit = 8 if mode == 'all' else 20
+    words = words[:limit]
 
-    # JS uchun ma'lumot tayyorlaymiz
-    all_uz = [w.uzbek for w in Word.objects.all()]
-    all_en = [w.english for w in Word.objects.all()]
+    all_uz = list(set(w.uzbek for w in Word.objects.all()))
+    all_en = list(set(w.english for w in Word.objects.all()))
 
     cards = []
     for w in words:
-        item = {
-            'id': w.id,
-            'english': w.english,
-            'uzbek': w.uzbek,
-            'example': w.example,
-            'emoji': w.emoji,
-        }
-        if mode == 'en_uz':
-            distractors = random.sample([u for u in all_uz if u != w.uzbek],
-                                        k=min(3, max(0, len(set(all_uz)) - 1)))
-            options = distractors + [w.uzbek]
-            random.shuffle(options)
-            item['options'] = options
-            item['answer'] = w.uzbek
-        elif mode == 'uz_en':
-            distractors = random.sample([e for e in all_en if e != w.english],
-                                        k=min(3, max(0, len(set(all_en)) - 1)))
-            options = distractors + [w.english]
-            random.shuffle(options)
-            item['options'] = options
-            item['answer'] = w.english
+        item = {'id': w.id, 'english': w.english, 'uzbek': w.uzbek,
+                'example': w.example, 'emoji': w.emoji}
+        d_uz = random.sample([u for u in all_uz if u != w.uzbek], k=min(3, max(0, len(all_uz) - 1)))
+        opts_uz = d_uz + [w.uzbek]
+        random.shuffle(opts_uz)
+        item['opts_en_uz'] = opts_uz
+        d_en = random.sample([e for e in all_en if e != w.english], k=min(3, max(0, len(all_en) - 1)))
+        opts_en = d_en + [w.english]
+        random.shuffle(opts_en)
+        item['opts_uz_en'] = opts_en
         cards.append(item)
 
     return render(request, 'vocabulary/practice.html', {
-        'mode': mode,
-        'mode_info': MODES[mode],
-        'level_code': level_code,
-        'cards_json': json.dumps(cards),
-        'coins_per_word': COINS_PER_WORD,
+        'mode': mode, 'mode_info': MODES[mode], 'level_code': level_code,
+        'cards_json': json.dumps(cards), 'coins_per_word': COINS_PER_WORD,
     })
+
 
 
 @login_required
 def check_word(request):
-    """AJAX: so'z to'g'ri bilindi -> birinchi marta bo'lsa coin beradi."""
     if request.method != 'POST':
         return JsonResponse({'ok': False})
     data = json.loads(request.body)
@@ -110,3 +97,11 @@ def check_word(request):
     progress.save()
 
     return JsonResponse({'ok': True, 'awarded': awarded, 'coins': request.user.profile.coins})
+
+@login_required
+def not_learned(request):
+    progress = WordProgress.objects.filter(
+        user=request.user, coins_awarded=False
+    ).select_related('word')
+    words = [p.word for p in progress]
+    return render(request, 'vocabulary/not_learned.html', {'words': words})

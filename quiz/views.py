@@ -6,17 +6,17 @@ from .models import Quiz, Question, Choice, QuizAttempt
 
 
 def quiz_list(request):
-    quizzes = Quiz.objects.all()
-    # foydalanuvchi qaysi quizlarni yechganini belgilaymiz
-    done_ids = set()
+    quizzes = list(Quiz.objects.all())
+    progress = {}
     if request.user.is_authenticated:
-        done_ids = set(
-            QuizAttempt.objects.filter(user=request.user).values_list('quiz_id', flat=True)
-        )
-    return render(request, 'quiz/quiz_list.html', {
-        'quizzes': quizzes,
-        'done_ids': done_ids,
-    })
+        for a in QuizAttempt.objects.filter(user=request.user):
+            pct = a.percentage()
+            if a.quiz_id not in progress or pct > progress[a.quiz_id]:
+                progress[a.quiz_id] = pct
+    for q in quizzes:
+        q.best_pct = progress.get(q.id, 0)
+    return render(request, 'quiz/quiz_list.html', {'quizzes': quizzes})
+
 
 
 @login_required

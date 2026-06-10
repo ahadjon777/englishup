@@ -5,17 +5,18 @@
     .practice-wrap { max-width: 620px; margin: 0 auto; }
     .progress-thin { height: 12px; border-radius: 10px; background:#e8e8e8; }
     .progress-thin .bar { background:#58CC02; height:100%; border-radius:10px; transition:width 0.3s; }
-    .card-box { background:#fff; border-radius:20px; padding:40px 30px; box-shadow:0 4px 20px rgba(0,0,0,0.06); text-align:center; min-height:230px; display:flex; flex-direction:column; justify-content:center; }
-    .prompt { font-size:2.2rem; font-weight:800; color:#333; }
+    .card-box { background:#fff; border-radius:20px; padding:40px 30px; box-shadow:0 4px 20px rgba(0,0,0,0.06); text-align:center; min-height:260px; display:flex; flex-direction:column; justify-content:center; }
+    .word-img { font-size:6rem; line-height:1; margin-bottom:10px; }
+    .prompt { font-size:2.4rem; font-weight:800; color:#333; }
     .sub { color:#888; margin-top:8px; }
     .opt-btn { display:block; width:100%; border:2px solid #e0e0e0; border-radius:14px; padding:14px; margin-bottom:10px; background:#fff; font-weight:600; font-size:1.05rem; transition:0.12s; }
     .opt-btn:hover:not(:disabled) { border-color:#58CC02; background:#f0fff0; }
     .opt-btn.correct { border-color:#58CC02; background:#d7ffcc; }
     .opt-btn.wrong { border-color:#ff4b4b; background:#ffe0e0; }
     .write-input { border:2px solid #58CC02; border-radius:14px; padding:14px; font-size:1.2rem; width:100%; text-align:center; outline:none; }
-    .flip-card { perspective:1000px; cursor:pointer; }
     .feedback { font-weight:800; font-size:1.1rem; min-height:28px; margin-top:10px; }
     .done-box { text-align:center; background:#fff; border-radius:20px; padding:50px 30px; box-shadow:0 4px 20px rgba(0,0,0,0.06); }
+    .phase-pill { background:#1cb0f6; color:#fff; border-radius:50px; padding:4px 14px; font-weight:700; font-size:.85rem; }
 </style>
 {% endblock %}
 {% block content %}
@@ -23,54 +24,42 @@
     <div class="practice-wrap">
         <a href="/vocabulary/" class="btn btn-outline-eng mb-3">← Lug'at</a>
         <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="fw-bold mb-0">{{ mode_info.icon }} {{ mode_info.title }}</h5>
+            <span class="phase-pill" id="phaseLabel">{{ mode_info.icon }} {{ mode_info.title }}</span>
             <span class="text-muted" id="counter">0 / 0</span>
         </div>
         <div class="progress-thin mb-4"><div class="bar" id="bar" style="width:0%"></div></div>
-
         <div id="stage"></div>
         <div class="feedback text-center" id="feedback"></div>
-
         <div class="text-center mt-3" id="nextWrap" style="display:none;">
             <button class="btn btn-eng btn-lg px-5" id="nextBtn">Keyingi →</button>
         </div>
     </div>
 </div>
 {% endblock %}
-
 {% block extra_js %}
 <script>
     const CARDS = {{ cards_json|safe }};
     const MODE = "{{ mode }}";
     const COINS_PER_WORD = {{ coins_per_word }};
-    let idx = 0, earned = 0;
-
+    const PHASES = MODE === 'all' ? ['study','en_uz','uz_en','write','listen'] : [MODE];
+    const PHASE_NAMES = {study:"🃏 So'zlar", en_uz:"🇬🇧 → 🇺🇿", uz_en:"🇺🇿 → 🇬🇧", write:"✍️ Yozish", listen:"🎤 Gapirish"};
+    let phaseIdx = 0, idx = 0, earned = 0;
+    const totalSteps = PHASES.length * CARDS.length;
     const stage = document.getElementById('stage');
     const feedback = document.getElementById('feedback');
     const nextWrap = document.getElementById('nextWrap');
     const nextBtn = document.getElementById('nextBtn');
     const counter = document.getElementById('counter');
     const bar = document.getElementById('bar');
+    const phaseLabel = document.getElementById('phaseLabel');
 
-    function getCookie(name) {
-        let v = null;
-        if (document.cookie) {
-            document.cookie.split(';').forEach(c => {
-                c = c.trim();
-                if (c.startsWith(name + '=')) v = decodeURIComponent(c.substring(name.length + 1));
-            });
-        }
-        return v;
-    }
+    function getCookie(name){let v=null;if(document.cookie){document.cookie.split(';').forEach(c=>{c=c.trim();if(c.startsWith(name+'=')) v=decodeURIComponent(c.substring(name.length+1));});}return v;}
 
     function sendResult(wordId, correct) {
         fetch('/vocabulary/check/', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+            method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
             body: JSON.stringify({word_id: wordId, correct: correct})
-        })
-        .then(r => r.json())
-        .then(data => {
+        }).then(r=>r.json()).then(data=>{
             if (data.awarded > 0) {
                 earned += data.awarded;
                 const badge = document.querySelector('.coin-badge');
@@ -81,169 +70,102 @@
     }
 
     function updateProgress() {
+        const done = phaseIdx * CARDS.length + idx;
+        const cur = PHASES[phaseIdx] || PHASES[PHASES.length-1];
+        let label = PHASE_NAMES[cur] || cur;
+        if (MODE === 'all') label = `Bosqich ${phaseIdx+1}/${PHASES.length}: ` + label;
+        phaseLabel.innerHTML = label;
         counter.textContent = idx + ' / ' + CARDS.length;
-        bar.style.width = (CARDS.length ? (idx / CARDS.length * 100) : 0) + '%';
+        bar.style.width = (totalSteps ? (done / totalSteps * 100) : 0) + '%';
     }
 
     function render() {
-        feedback.innerHTML = '';
-        nextWrap.style.display = 'none';
+        feedback.innerHTML = ''; nextWrap.style.display = 'none';
+        if (idx >= CARDS.length) { phaseIdx++; idx = 0; if (phaseIdx >= PHASES.length) return finish(); }
         updateProgress();
-
-        if (idx >= CARDS.length) return finish();
+        const cur = PHASES[phaseIdx];
         const card = CARDS[idx];
 
-        if (MODE === 'study') {
+        if (cur === 'study') {
             stage.innerHTML = `
-                <div class="card-box flip-card" id="flip">
-                    <div id="front">
-                        <div style="font-size:4.5rem;">${card.emoji}</div>
-                        <div class="prompt">${card.english}</div>
-                        <div class="sub">Tarjimani ko'rish uchun bosing 👆</div>
-                    </div>
-                </div>
-                <div class="d-flex gap-2 mt-3">
-                    <button class="btn btn-outline-secondary flex-fill" id="skip">Bilmadim</button>
-                    <button class="btn btn-eng flex-fill" id="know">Bilaman ✓</button>
+                <div class="card-box">
+                    <div class="word-img">${card.emoji}</div>
+                    <div class="prompt">${card.english}</div>
+                    <div class="prompt" style="color:#58CC02; font-size:1.9rem;">${card.uzbek}</div>
+                    <div class="sub">${card.example || ''}</div>
                 </div>`;
-            document.getElementById('flip').onclick = () => {
-                document.getElementById('front').innerHTML =
-                    `<div style="font-size:4.5rem;">${card.emoji}</div>
-                     <div class="prompt" style="color:#58CC02;">${card.uzbek}</div>
-                     <div class="sub">${card.example || ''}</div>`;
-            };
-            document.getElementById('know').onclick = () => { sendResult(card.id, true); feedback.innerHTML = '✅ Yodlandi!'; showNext(); };
-            document.getElementById('skip').onclick = () => { sendResult(card.id, false); showNext(); };
+            if ('speechSynthesis' in window) {
+                const u = new SpeechSynthesisUtterance(card.english);
+                u.lang = 'en-US'; u.rate = 0.9; speechSynthesis.cancel(); speechSynthesis.speak(u);
+            }
+            showNext();
         }
-        else if (MODE === 'en_uz' || MODE === 'uz_en') {
-            const prompt = MODE === 'en_uz' ? card.english : card.uzbek;
-            const sub = MODE === 'en_uz' ? '🇺🇿 O\'zbekchasini tanlang' : '🇬🇧 Inglizchasini tanlang';
-            let opts = card.options.map(o =>
-                `<button class="opt-btn" data-val="${o}">${o}</button>`).join('');
-            stage.innerHTML = `
-                <div class="card-box"><div class="prompt">${prompt}</div><div class="sub">${sub}</div></div>
-                <div class="mt-3">${opts}</div>`;
+        else if (cur === 'en_uz' || cur === 'uz_en') {
+            const prompt = cur === 'en_uz' ? card.english : card.uzbek;
+            const sub = cur === 'en_uz' ? "🇺🇿 O'zbekchasini tanlang" : "🇬🇧 Inglizchasini tanlang";
+            const options = cur === 'en_uz' ? card.opts_en_uz : card.opts_uz_en;
+            const answer = cur === 'en_uz' ? card.uzbek : card.english;
+            let opts = options.map(o => `<button class="opt-btn" data-val="${o}">${o}</button>`).join('');
+            stage.innerHTML = `<div class="card-box"><div class="word-img">${card.emoji}</div><div class="prompt">${prompt}</div><div class="sub">${sub}</div></div><div class="mt-3">${opts}</div>`;
             document.querySelectorAll('.opt-btn').forEach(btn => {
                 btn.onclick = () => {
                     document.querySelectorAll('.opt-btn').forEach(b => b.disabled = true);
-                    const correct = btn.dataset.val === card.answer;
-                    if (correct) { btn.classList.add('correct'); feedback.innerHTML = '✅ To\'g\'ri!'; }
-                    else {
-                        btn.classList.add('wrong'); feedback.innerHTML = '❌ Noto\'g\'ri';
-                        document.querySelectorAll('.opt-btn').forEach(b => { if (b.dataset.val === card.answer) b.classList.add('correct'); });
-                    }
-                    sendResult(card.id, correct);
-                    showNext();
+                    const correct = btn.dataset.val === answer;
+                    if (correct) { btn.classList.add('correct'); feedback.innerHTML = "✓ To'g'ri!"; }
+                    else { btn.classList.add('wrong'); feedback.innerHTML = "✗ Noto'g'ri";
+                        document.querySelectorAll('.opt-btn').forEach(b => { if (b.dataset.val === answer) b.classList.add('correct'); }); }
+                    sendResult(card.id, correct); showNext();
                 };
             });
         }
-        else if (MODE === 'write') {
-            stage.innerHTML = `
-                <div class="card-box">
-                    <div style="font-size:4rem;">${card.emoji}</div>
-                    <div class="prompt" style="color:#58CC02;">${card.uzbek}</div>
-                    <div class="sub">✍️ Inglizchasini yozing</div>
-                </div>
-                <input type="text" class="write-input mt-3" id="ans" autocomplete="off" placeholder="Type in English...">
-                <button class="btn btn-eng btn-lg w-100 mt-3" id="checkBtn">Tekshirish</button>`;
-            const input = document.getElementById('ans');
-            input.focus();
+        else if (cur === 'write') {
+            stage.innerHTML = `<div class="card-box"><div class="word-img">${card.emoji}</div><div class="prompt" style="color:#58CC02;">${card.uzbek}</div><div class="sub">✍️ Inglizchasini yozing</div></div><input type="text" class="write-input mt-3" id="ans" autocomplete="off" placeholder="Type in English..."><button class="btn btn-eng btn-lg w-100 mt-3" id="checkBtn">Tekshirish</button>`;
+            const input = document.getElementById('ans'); input.focus();
             const check = () => {
-                const val = input.value.trim().toLowerCase();
-                if (!val) return;
+                const val = input.value.trim().toLowerCase(); if (!val) return;
                 const correct = val === card.english.trim().toLowerCase();
-                input.disabled = true;
-                document.getElementById('checkBtn').style.display = 'none';
-                if (correct) feedback.innerHTML = '✅ To\'g\'ri!';
-                else feedback.innerHTML = `❌ To'g'ri javob: <b style="color:#58CC02;">${card.english}</b>`;
-                sendResult(card.id, correct);
-                showNext();
+                input.disabled = true; document.getElementById('checkBtn').style.display = 'none';
+                if (correct) feedback.innerHTML = "✓ To'g'ri!";
+                else feedback.innerHTML = `✗ To'g'ri javob: <b style="color:#58CC02;">${card.english}</b>`;
+                sendResult(card.id, correct); showNext();
             };
             document.getElementById('checkBtn').onclick = check;
             input.addEventListener('keypress', e => { if (e.key === 'Enter') check(); });
         }
-        else if (MODE === 'listen') {
-            stage.innerHTML = `
-                <div class="card-box">
-                    <div style="font-size:4rem;">${card.emoji}</div>
-                    <div class="prompt">${card.english}</div>
-                    <div class="sub">🔊 Tinglang va ovoz bilan takrorlang</div>
-                </div>
-                <div class="d-flex gap-2 mt-3">
-                    <button class="btn btn-outline-eng flex-fill" id="listenBtn">🔊 Tinglash</button>
-                    <button class="btn btn-eng flex-fill" id="speakBtn">🎤 Gapirish</button>
-                </div>
-                <div class="text-center mt-2"><button class="btn btn-link text-muted" id="skipListen">O'tkazib yuborish</button></div>`;
-            const speak = () => {
-                if ('speechSynthesis' in window) {
-                    const u = new SpeechSynthesisUtterance(card.english);
-                    u.lang = 'en-US'; u.rate = 0.9;
-                    speechSynthesis.cancel();
-                    speechSynthesis.speak(u);
-                }
-            };
-            speak(); // so'zni avtomatik aytadi
+        else if (cur === 'listen') {
+            stage.innerHTML = `<div class="card-box"><div class="word-img">${card.emoji}</div><div class="prompt">${card.english}</div><div class="sub">🔊 Tinglang va takrorlang</div></div><div class="d-flex gap-2 mt-3"><button class="btn btn-outline-eng flex-fill" id="listenBtn">🔊 Tinglash</button><button class="btn btn-eng flex-fill" id="speakBtn">🎤 Gapirish</button></div><div class="text-center mt-2"><button class="btn btn-link text-muted" id="skipListen">O'tkazib yuborish</button></div>`;
+            const speak = () => { if ('speechSynthesis' in window){const u=new SpeechSynthesisUtterance(card.english);u.lang='en-US';u.rate=0.9;speechSynthesis.cancel();speechSynthesis.speak(u);} };
+            speak();
             document.getElementById('listenBtn').onclick = speak;
             document.getElementById('skipListen').onclick = () => { sendResult(card.id, false); showNext(); };
-
             const speakBtn = document.getElementById('speakBtn');
             const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SR) {
-                // Brauzer ovoz tanishni qo'llab-quvvatlamasa
-                speakBtn.textContent = "✓ Aytdim";
-                speakBtn.onclick = () => { sendResult(card.id, true); feedback.innerHTML = '✅ Ofarin!'; showNext(); };
-            } else {
-                speakBtn.onclick = () => {
-                    const rec = new SR();
-                    rec.lang = 'en-US'; rec.interimResults = false; rec.maxAlternatives = 3;
-                    feedback.innerHTML = '🎤 Tinglayapman...';
-                    rec.start();
-                    rec.onresult = (e) => {
-                        let said = '';
-                        for (let i = 0; i < e.results[0].length; i++) said += ' ' + e.results[0][i].transcript;
-                        said = said.toLowerCase();
-                        const target = card.english.trim().toLowerCase();
-                        const correct = said.includes(target);
-                        if (correct) feedback.innerHTML = `✅ To'g'ri! ("${e.results[0][0].transcript.trim()}")`;
-                        else feedback.innerHTML = `❌ "${e.results[0][0].transcript.trim()}" — to'g'risi: <b style="color:#58CC02;">${card.english}</b>`;
-                        sendResult(card.id, correct);
-                        showNext();
-                    };
-                    rec.onerror = () => {
-                        feedback.innerHTML = "🎤 Mikrofon ishlamadi. 'O'tkazib yuborish' ni bosing yoki qayta urining.";
-                    };
+            if (!SR) { speakBtn.textContent = "✓ Aytdim"; speakBtn.onclick = () => { sendResult(card.id, true); feedback.innerHTML='✓ Ofarin!'; showNext(); }; }
+            else { speakBtn.onclick = () => {
+                const rec = new SR(); rec.lang='en-US'; rec.interimResults=false; rec.maxAlternatives=3;
+                feedback.innerHTML = '🎤 Tinglayapman...'; rec.start();
+                rec.onresult = (e) => {
+                    let said=''; for (let i=0;i<e.results[0].length;i++) said+=' '+e.results[0][i].transcript;
+                    const correct = said.toLowerCase().includes(card.english.trim().toLowerCase());
+                    if (correct) feedback.innerHTML = `✓ To'g'ri! ("${e.results[0][0].transcript.trim()}")`;
+                    else feedback.innerHTML = `✗ "${e.results[0][0].transcript.trim()}" — to'g'risi: <b style="color:#58CC02;">${card.english}</b>`;
+                    sendResult(card.id, correct); showNext();
                 };
-            }
+                rec.onerror = () => { feedback.innerHTML = "🎤 Mikrofon ishlamadi. O'tkazib yuboring."; };
+            }; }
         }
     }
 
-    function showNext() {
-        nextWrap.style.display = 'block';
-        nextBtn.focus();
-    }
-
+    function showNext() { nextWrap.style.display = 'block'; nextBtn.focus(); }
     nextBtn.onclick = () => { idx++; render(); };
 
     function finish() {
-        updateProgress();
-        stage.innerHTML = `
-            <div class="done-box">
-                <div style="font-size:4rem;">🎉</div>
-                <h2 class="fw-bold" style="color:#58CC02;">Tabriklaymiz!</h2>
-                <p class="fs-5">Mashqni tugatdingiz.</p>
-                <div class="coin-badge fs-5 my-2"><i class="fa-solid fa-coins"></i> +${earned} coin topdingiz</div>
-                <div class="mt-3 d-flex gap-2 justify-content-center">
-                    <a href="/vocabulary/" class="btn btn-outline-eng">Lug'at</a>
-                    <a href="" onclick="location.reload();return false;" class="btn btn-eng">Yana mashq</a>
-                </div>
-            </div>`;
+        bar.style.width = '100%'; counter.textContent = CARDS.length + ' / ' + CARDS.length;
+        stage.innerHTML = `<div class="done-box"><div style="font-size:4rem;">🎉</div><h2 class="fw-bold" style="color:#58CC02;">Tabriklaymiz!</h2><p class="fs-5">Mashqni tugatdingiz.</p><div class="coin-badge fs-5 my-2"><i class="fa-solid fa-coins"></i> +${earned} coin topdingiz</div><div class="mt-3 d-flex gap-2 justify-content-center"><a href="/vocabulary/" class="btn btn-outline-eng">Lug'at</a><a href="" onclick="location.reload();return false;" class="btn btn-eng">Yana mashq</a></div></div>`;
         feedback.innerHTML = '';
     }
 
-    if (CARDS.length === 0) {
-        stage.innerHTML = '<div class="done-box"><p class="text-muted">Bu darajada so\'z yo\'q.</p><a href="/vocabulary/" class="btn btn-eng">Orqaga</a></div>';
-    } else {
-        render();
-    }
+    if (CARDS.length === 0) { stage.innerHTML = '<div class="done-box"><p class="text-muted">Bu darajada so\'z yo\'q.</p><a href="/vocabulary/" class="btn btn-eng">Orqaga</a></div>'; }
+    else { render(); }
 </script>
 {% endblock %}

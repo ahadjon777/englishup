@@ -12,6 +12,8 @@
     <div class="text-center mb-5">
         <h1 class="fw-bold" style="color:#58CC02;">📖 Lug'at</h1>
         <p class="text-muted">So'zlarni yodlang, har bir yangi so'z uchun coin oling! <i class="fa-solid fa-coins"></i></p>
+                <a href="/vocabulary/not-learned/" class="btn btn-outline-eng mt-2">▪ O'zlashtirilmagan lug'atlar</a>
+
     </div>
 
     {% for item in level_data %}
@@ -22,17 +24,14 @@
                 {{ item.level.name }}
                 <small class="text-muted fs-6">({{ item.count }} ta so'z)</small>
             </h4>
-            <div class="row g-3 mt-1">
-                {% for key, m in modes.items %}
-                <div class="col-md-3 col-6">
-                    <a href="/vocabulary/{{ item.level.code }}/{{ key }}/" class="mode-card text-center">
-                        <div style="font-size:2rem;">{{ m.icon }}</div>
-                        <div class="fw-bold mt-1">{{ m.title }}</div>
-                        <small class="text-muted">{{ m.desc }}</small>
-                    </a>
-                </div>
-                {% endfor %}
+                       <div class="mt-3 d-flex flex-wrap gap-2">
+                <a href="/vocabulary/{{ item.level.code }}/all/" class="mode-card text-center flex-fill">
+                    <div style="font-size:2.5rem;">🔥</div>
+                    <div class="fw-bold mt-1 fs-5">To'liq mashq (5 bosqich)</div>
+                    <small class="text-muted">Barcha bosqich ketma-ket — o'yinday</small>
+                </a>
             </div>
+
         </div>
     </div>
     {% empty %}

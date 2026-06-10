@@ -1,36 +1,43 @@
 {% extends 'base.html' %}
-{% block title %}Quizlar - EnglishUp{% endblock %}
+{% block title %}Mashqlar - EnglishUp{% endblock %}
+{% block extra_css %}
+<style>
+  .ex-card { background:#fff; border:2px solid #eee; border-radius:18px; padding:22px; transition:.15s; height:100%; text-decoration:none; color:#333; display:block; }
+  .ex-card:hover { border-color:#58CC02; transform:translateY(-3px); box-shadow:0 6px 18px rgba(0,0,0,.06); color:#333; }
+  .tag { border-radius:50px; padding:4px 14px; font-weight:700; font-size:.8rem; color:#fff; display:inline-block; }
+  .tag-grammar { background:#ff9600; }
+  .tag-level { background:#58CC02; }
+  .coin-pill { background:#fff3cd; color:#8a6d00; border-radius:50px; padding:3px 12px; font-weight:800; font-size:.85rem; }
+  .ex-title { font-weight:800; font-size:1.05rem; margin:14px 0; color:#222; }
+  .ex-progress { height:14px; border-radius:10px; background:#eee; overflow:hidden; }
+  .ex-progress .bar { height:100%; border-radius:10px; }
+  .bar-green { background:#58CC02; }
+  .bar-orange { background:#ff9600; }
+</style>
+{% endblock %}
 {% block content %}
 <div class="container py-5">
-    <div class="text-center mb-5">
-        <h1 class="fw-bold" style="color:#58CC02;">❓ Quizlar</h1>
-        <p class="text-muted">Bilimingizni sinab ko'ring va coin to'plang! <i class="fa-solid fa-coins"></i></p>
-    </div>
+    <h1 class="text-center fw-bold mb-5" style="color:#58CC02;">📝 Mashqlar</h1>
     <div class="row g-4">
         {% for quiz in quizzes %}
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm h-100" style="border-radius: 20px;">
-                <div class="card-body p-4 text-center d-flex flex-column">
-                    <div style="font-size: 2.5rem;">📝</div>
-                    {% if quiz.level %}<span class="badge mb-2" style="background:#58CC02;">{{ quiz.level.code }}</span>{% endif %}
-                    <h5 class="fw-bold">{{ quiz.title }}</h5>
-                    <p class="text-muted small flex-grow-1">{{ quiz.description }}</p>
-                    <div class="d-flex justify-content-center gap-3 mb-3 text-muted small">
-                        <span>📊 {{ quiz.question_count }} savol</span>
-                        <span><i class="fa-solid fa-coins"></i> {{ quiz.coin_reward }} coin</span>
+        <div class="col-md-6">
+            <a href="/quiz/{{ quiz.id }}/" class="ex-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="tag tag-grammar">Grammar</span>
+                        {% if quiz.level %}<span class="tag tag-level">{{ quiz.level.code }}</span>{% endif %}
                     </div>
-                    {% if quiz.id in done_ids %}
-                        <a href="/quiz/{{ quiz.id }}/" class="btn btn-outline-eng">✅ Qayta yechish</a>
-                    {% else %}
-                        <a href="/quiz/{{ quiz.id }}/" class="btn btn-eng">Boshlash →</a>
-                    {% endif %}
+                    <span class="coin-pill"><i class="fa-solid fa-coins"></i> {{ quiz.coin_reward }}</span>
                 </div>
-            </div>
+                <div class="ex-title">{{ quiz.title }}</div>
+                <div class="ex-progress">
+                    <div class="bar {% if quiz.best_pct >= 100 %}bar-green{% else %}bar-orange{% endif %}" style="width:{{ quiz.best_pct }}%"></div>
+                </div>
+                <div class="text-end mt-1"><small class="text-muted fw-bold">{{ quiz.best_pct }}%</small></div>
+            </a>
         </div>
         {% empty %}
-        <div class="col-12 text-center">
-            <p class="text-muted">Hali quiz yo'q. Admin paneldan qo'shing.</p>
-        </div>
+        <div class="col-12 text-center"><p class="text-muted">Hali mashq yo'q. AI orqali yoki admin paneldan qo'shing.</p></div>
         {% endfor %}
     </div>
 </div>
