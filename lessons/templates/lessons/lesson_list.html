@@ -1,74 +1,39 @@
 {% extends 'base.html' %}
-{% block title %}EnglishUp - {{ level.name }}{% endblock %}
+{% block title %}{{ level.name }} - EnglishUp{% endblock %}
 {% block extra_css %}
 <style>
-    .lesson-card {
-        border: none;
-        border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        transition: transform 0.2s;
-    }
-    .lesson-card:hover { transform: translateY(-3px); }
-    .lesson-number {
-        background: #58CC02;
-        color: white;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        flex-shrink: 0;
-    }
-    .btn-lesson {
-        background: #58CC02;
-        color: white;
-        border: none;
-        border-radius: 20px;
-        padding: 6px 20px;
-        font-weight: bold;
-    }
-    .btn-lesson:hover { background: #46a302; color: white; }
-    .level-header {
-        background: linear-gradient(135deg,#58CC02,#2d8a00);
-        color: white;
-        border-radius: 20px;
-        padding: 30px;
-        margin-bottom: 25px;
-    }
+    .lesson-card { border:2px solid #eee; border-radius:16px; box-shadow:0 4px 15px rgba(0,0,0,0.05); transition:.15s; text-decoration:none; color:#333; display:block; }
+    .lesson-card:hover { transform:translateY(-3px); border-color:#58CC02; color:#333; }
+    .lesson-number { background:#58CC02; color:#fff; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; flex-shrink:0; font-size:1.1rem; }
+    .level-header { background:linear-gradient(135deg,#58CC02,#2d8a00); color:#fff; border-radius:20px; padding:30px; margin-bottom:25px; text-align:center; }
 </style>
 {% endblock %}
 {% block content %}
-<div class="container py-5">
+<div class="container py-5" style="max-width:900px;">
     <a href="/lessons/" class="btn btn-outline-eng mb-4">← Darajalar</a>
 
-    <div class="level-header text-center">
-        <div style="font-size: 3rem;">{{ level.icon }}</div>
-        <h2 class="fw-bold">{{ level.name }}</h2>
-        <p class="mb-0" style="opacity:.9;">{{ level.description }}</p>
+    <div class="level-header">
+        <div style="font-size:3rem;">{{ level.icon }}</div>
+        <h2 class="fw-bold mb-0">{{ level.name }}</h2>
+        <p class="mb-0" style="opacity:.9;">{{ lessons.count }} ta dars</p>
     </div>
 
     <div class="row g-3">
         {% for lesson in lessons %}
         <div class="col-12">
-            <div class="card lesson-card p-3">
-                <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="lesson-number">{{ forloop.counter }}</div>
-                        <div>
-                            <h5 class="mb-0 fw-bold">{{ lesson.title }}</h5>
-                            <small class="text-muted">{{ lesson.description }}</small>
-                        </div>
+            <a href="/lessons/lesson/{{ lesson.pk }}/" class="lesson-card p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="lesson-number">{{ forloop.counter }}</div>
+                    <div class="flex-grow-1">
+                        <h5 class="mb-0 fw-bold">{{ lesson.title }}</h5>
+                        <small class="text-muted">{{ lesson.description }}</small>
                     </div>
-                    <a href="/lessons/lesson/{{ lesson.pk }}/" class="btn btn-lesson">Start</a>
+                    <span style="color:#58CC02; font-weight:800; font-size:1.4rem;">→</span>
                 </div>
-            </div>
+            </a>
         </div>
         {% empty %}
-        <div class="col-12 text-center">
-            <p class="text-muted">No lessons yet for this level.</p>
-        </div>
+        <div class="col-12 text-center"><p class="text-muted">Bu darajada hali dars yo'q.</p></div>
         {% endfor %}
     </div>
 </div>

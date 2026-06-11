@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from lessons.models import Level
+from lessons.models import Level, Lesson
 
 
 class Word(models.Model):
@@ -8,6 +8,7 @@ class Word(models.Model):
     uzbek = models.CharField(max_length=100)
     example = models.CharField(max_length=300, blank=True)
     level = models.ForeignKey(Level, on_delete=models.CASCADE, related_name='words', null=True, blank=True)
+    lesson = models.ForeignKey(Lesson, on_delete=models.SET_NULL, related_name='words', null=True, blank=True)
     emoji = models.CharField(max_length=10, blank=True, default='📘')
     created_at = models.DateTimeField(auto_now_add=True)
 

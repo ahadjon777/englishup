@@ -41,12 +41,9 @@ def _words_for_level(level_code):
     level = get_object_or_404(Level, code=level_code)
     return list(level.words.all())
 
-@login_required
-def practice(request, level_code, mode):
-    if mode not in MODES:
-        return redirect('vocab_home')
 
-    words = _words_for_level(level_code)
+def _build_practice(request, mode, words, back_url):
+    """So'zlar ro'yxati uchun mashq sahifasini tayyorlaydi."""
     random.shuffle(words)
     limit = 8 if mode == 'all' else 20
     words = words[:limit]
@@ -69,9 +66,28 @@ def practice(request, level_code, mode):
         cards.append(item)
 
     return render(request, 'vocabulary/practice.html', {
-        'mode': mode, 'mode_info': MODES[mode], 'level_code': level_code,
+        'mode': mode, 'mode_info': MODES[mode], 'back_url': back_url,
         'cards_json': json.dumps(cards), 'coins_per_word': COINS_PER_WORD,
     })
+
+
+@login_required
+def practice(request, level_code, mode):
+    if mode not in MODES:
+        return redirect('vocab_home')
+    words = _words_for_level(level_code)
+    return _build_practice(request, mode, words, '/vocabulary/')
+
+
+@login_required
+def practice_lesson(request, lesson_id, mode):
+    """Bitta darsga tegishli so'zlar bilan mashq."""
+    if mode not in MODES:
+        mode = 'all'
+    from lessons.models import Lesson
+    lesson = get_object_or_404(Lesson, pk=lesson_id)
+    words = list(lesson.words.all())
+    return _build_practice(request, mode, words, f'/lessons/lesson/{lesson.id}/')
 
 
 

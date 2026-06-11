@@ -49,19 +49,20 @@ def level_hub(request, level_code):
 
 
 def lesson_detail(request, pk):
-    from quiz.models import Quiz
     lesson = get_object_or_404(Lesson, pk=pk)
     watched = False
     if request.user.is_authenticated:
         watched = LessonCompletion.objects.filter(
             user=request.user, lesson=lesson, video_watched=True
         ).exists()
-    # Faqat shu darsning darajasidagi testlar (darajadan baland emas)
-    related_quizzes = Quiz.objects.filter(level=lesson.level).order_by('order')
+    # Shu darsga tegishli homework (testlar) va vocabulary (so'zlar)
+    homework = lesson.quizzes.all().order_by('order')
+    vocab_words = lesson.words.all()
     return render(request, 'lessons/lesson_detail.html', {
         'lesson': lesson,
         'watched': watched,
-        'related_quizzes': related_quizzes,
+        'homework': homework,
+        'vocab_count': vocab_words.count(),
     })
 
 

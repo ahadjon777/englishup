@@ -289,7 +289,7 @@ A1_VOCAB = {
 # ---------------------------------------------------------------------------
 A1_QUIZZES = [
     {
-        'title': 'To be (am/is/are)', 'reward': 20,
+        'title': 'To be (am/is/are)', 'reward': 20, 'lesson': 'To be (am, is, are)',
         'questions': [
             ('I ___ a student.', ['am', 'is', 'are', 'be'], 'am'),
             ('She ___ my friend.', ['am', 'are', 'is', 'be'], 'is'),
@@ -300,7 +300,7 @@ A1_QUIZZES = [
         ],
     },
     {
-        'title': 'Articles (a/an/the)', 'reward': 20,
+        'title': 'Articles (a/an/the)', 'reward': 20, 'lesson': 'Articles (a, an, the)',
         'questions': [
             ('I have ___ apple.', ['a', 'an', 'the', '-'], 'an'),
             ('She is ___ teacher.', ['an', 'the', 'a', '-'], 'a'),
@@ -311,7 +311,7 @@ A1_QUIZZES = [
         ],
     },
     {
-        'title': 'Present Simple', 'reward': 20,
+        'title': 'Present Simple', 'reward': 20, 'lesson': 'Present Simple',
         'questions': [
             ('She ___ to school every day.', ['go', 'goes', 'going', 'gone'], 'goes'),
             ('I ___ coffee in the morning.', ['drinks', 'drinking', 'drink', 'drank'], 'drink'),
@@ -322,7 +322,7 @@ A1_QUIZZES = [
         ],
     },
     {
-        'title': "Can / Can't", 'reward': 20,
+        'title': "Can / Can't", 'reward': 20, 'lesson': "Can / Can't",
         'questions': [
             ('I ___ swim very well.', ['can', 'cans', 'caning', 'to can'], 'can'),
             ('She can ___ three languages.', ['speaks', 'speak', 'speaking', 'spoke'], 'speak'),
@@ -333,7 +333,7 @@ A1_QUIZZES = [
         ],
     },
     {
-        'title': 'There is / There are', 'reward': 20,
+        'title': 'There is / There are', 'reward': 20, 'lesson': 'There is / There are',
         'questions': [
             ('___ a cat in the room.', ['There are', 'There is', 'There be', 'It is'], 'There is'),
             ('___ five books on the table.', ['There is', 'There are', 'There be', 'It are'], 'There are'),
@@ -344,6 +344,22 @@ A1_QUIZZES = [
         ],
     },
 ]
+
+# Vocabulary toifasini grammatika darsiga bog'lash
+VOCAB_LESSON_MAP = {
+    'Salomlashish': 'To be (am, is, are)',
+    'Oila': 'Subject pronouns',
+    'Kasblar': 'Possessive adjectives',
+    'Raqamlar': 'Singular va plural nouns',
+    'Ranglar': 'Articles (a, an, the)',
+    'Kunlar va oylar': 'Present Simple',
+    'Vaqt': 'Prepositions of place',
+    'Uy va xonalar': 'There is / There are',
+    'Oziq-ovqat': 'Countable va uncountable nouns',
+    'Kiyimlar': 'Some / Any',
+    'Hayvonlar': 'Have got / Has got',
+    'Maktab buyumlari': 'Imperatives',
+}
 
 STICKERS = [
     ('Yulduzcha', '⭐', 'Yorqin yulduz', 50),
@@ -374,9 +390,10 @@ class Command(BaseCommand):
         a1 = levels['A1']
 
         # Grammar lessons
+        lessons_by_title = {}
         lesson_count = 0
         for i, g in enumerate(A1_GRAMMAR):
-            _, created = Lesson.objects.get_or_create(
+            lesson, created = Lesson.objects.get_or_create(
                 level=a1, title=g['title'],
                 defaults={
                     'description': g['desc'],
@@ -385,36 +402,51 @@ class Command(BaseCommand):
                     'order': i,
                 },
             )
+            lessons_by_title[g['title']] = lesson
             lesson_count += 1 if created else 0
         self.stdout.write(self.style.SUCCESS(f"A1 grammar darslar: {lesson_count} ta yangi qo'shildi"))
 
-        # Vocabulary
+        # Vocabulary (har toifa o'z darsiga bog'lanadi)
         word_count = 0
         for category, words in A1_VOCAB.items():
+            lesson = lessons_by_title.get(VOCAB_LESSON_MAP.get(category))
             for eng, uz, ex, emoji in words:
-                _, created = Word.objects.get_or_create(
+                w, created = Word.objects.get_or_create(
                     english=eng,
-                    defaults={'uzbek': uz, 'example': ex, 'emoji': emoji, 'level': a1},
+                    defaults={'uzbek': uz, 'example': ex, 'emoji': emoji, 'level': a1, 'lesson': lesson},
                 )
+                # mavjud so'zni ham darajaga/darsga bog'laymiz
+                if not created:
+                    w.level = a1
+                    if lesson:
+                        w.lesson = lesson
+                    w.save()
                 word_count += 1 if created else 0
         self.stdout.write(self.style.SUCCESS(f"A1 so'zlar: {word_count} ta yangi qo'shildi"))
 
-        # Homework (quizzes)
+        # Homework (quizzes) — har biri darsiga bog'lanadi
         quiz_count = 0
         for qz in A1_QUIZZES:
-            if Quiz.objects.filter(title=qz['title']).exists():
-                continue
-            quiz = Quiz.objects.create(
-                title=qz['title'],
-                description=f"{qz['title']} bo'yicha grammatika testi",
-                level=a1,
-                coin_reward=qz['reward'],
-            )
-            for i, (text, options, answer) in enumerate(qz['questions']):
-                question = Question.objects.create(quiz=quiz, text=text, order=i)
-                for opt in options:
-                    Choice.objects.create(question=question, text=opt, is_correct=(opt == answer))
-            quiz_count += 1
+            lesson = lessons_by_title.get(qz.get('lesson'))
+            quiz = Quiz.objects.filter(title=qz['title']).first()
+            if quiz is None:
+                quiz = Quiz.objects.create(
+                    title=qz['title'],
+                    description=f"{qz['title']} bo'yicha grammatika testi",
+                    level=a1,
+                    lesson=lesson,
+                    coin_reward=qz['reward'],
+                )
+                for i, (text, options, answer) in enumerate(qz['questions']):
+                    question = Question.objects.create(quiz=quiz, text=text, order=i)
+                    for opt in options:
+                        Choice.objects.create(question=question, text=opt, is_correct=(opt == answer))
+                quiz_count += 1
+            else:
+                # mavjud quizni darsga bog'laymiz
+                if lesson and quiz.lesson_id != lesson.id:
+                    quiz.lesson = lesson
+                    quiz.save()
         self.stdout.write(self.style.SUCCESS(f"A1 homework (quiz): {quiz_count} ta yangi qo'shildi"))
 
         # Stickers

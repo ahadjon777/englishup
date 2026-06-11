@@ -22,7 +22,7 @@
 {% block content %}
 <div class="container py-5">
     <div class="practice-wrap">
-        <a href="/vocabulary/" class="btn btn-outline-eng mb-3">← Lug'at</a>
+        <a href="{{ back_url }}" class="btn btn-outline-eng mb-3">← Orqaga</a>
         <div class="d-flex justify-content-between align-items-center mb-2">
             <span class="phase-pill" id="phaseLabel">{{ mode_info.icon }} {{ mode_info.title }}</span>
             <span class="text-muted" id="counter">0 / 0</span>
@@ -41,6 +41,7 @@
     const CARDS = {{ cards_json|safe }};
     const MODE = "{{ mode }}";
     const COINS_PER_WORD = {{ coins_per_word }};
+    const BACK_URL = "{{ back_url }}";
     const PHASES = MODE === 'all' ? ['study','en_uz','uz_en','write','listen'] : [MODE];
     const PHASE_NAMES = {study:"🃏 So'zlar", en_uz:"🇬🇧 → 🇺🇿", uz_en:"🇺🇿 → 🇬🇧", write:"✍️ Yozish", listen:"🎤 Gapirish"};
     let phaseIdx = 0, idx = 0, earned = 0;
@@ -161,11 +162,11 @@
 
     function finish() {
         bar.style.width = '100%'; counter.textContent = CARDS.length + ' / ' + CARDS.length;
-        stage.innerHTML = `<div class="done-box"><div style="font-size:4rem;">🎉</div><h2 class="fw-bold" style="color:#58CC02;">Tabriklaymiz!</h2><p class="fs-5">Mashqni tugatdingiz.</p><div class="coin-badge fs-5 my-2"><i class="fa-solid fa-coins"></i> +${earned} coin topdingiz</div><div class="mt-3 d-flex gap-2 justify-content-center"><a href="/vocabulary/" class="btn btn-outline-eng">Lug'at</a><a href="" onclick="location.reload();return false;" class="btn btn-eng">Yana mashq</a></div></div>`;
+        stage.innerHTML = `<div class="done-box"><div style="font-size:4rem;">🎉</div><h2 class="fw-bold" style="color:#58CC02;">Tabriklaymiz!</h2><p class="fs-5">Mashqni tugatdingiz.</p><div class="coin-badge fs-5 my-2"><i class="fa-solid fa-coins"></i> +${earned} coin topdingiz</div><div class="mt-3 d-flex gap-2 justify-content-center"><a href="${BACK_URL}" class="btn btn-outline-eng">Lug'at</a><a href="" onclick="location.reload();return false;" class="btn btn-eng">Yana mashq</a></div></div>`;
         feedback.innerHTML = '';
     }
 
-    if (CARDS.length === 0) { stage.innerHTML = '<div class="done-box"><p class="text-muted">Bu darajada so\'z yo\'q.</p><a href="/vocabulary/" class="btn btn-eng">Orqaga</a></div>'; }
+    if (CARDS.length === 0) { stage.innerHTML = '<div class="done-box"><p class="text-muted">Bu darajada so\'z yo\'q.</p><a href="${BACK_URL}" class="btn btn-eng">Orqaga</a></div>'; }
     else { render(); }
 </script>
 {% endblock %}
