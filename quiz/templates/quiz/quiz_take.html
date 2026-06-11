@@ -1,41 +1,100 @@
 {% extends 'base.html' %}
-{% block title %}{{ quiz.title }} - Quiz{% endblock %}
+{% block title %}{{ quiz.title }} - Test{% endblock %}
 {% block extra_css %}
 <style>
-    .q-card { background:#fff; border-radius:20px; padding:25px; box-shadow:0 4px 20px rgba(0,0,0,0.06); margin-bottom:20px; }
-    .choice-label {
-        display:block; border:2px solid #e0e0e0; border-radius:14px; padding:14px 18px;
-        margin-bottom:10px; cursor:pointer; transition:0.15s; font-weight:500;
-    }
-    .choice-label:hover { border-color:#58CC02; background:#f0fff0; }
-    input[type=radio]:checked + .choice-label { border-color:#58CC02; background:#e6ffe0; }
-    .choice-input { display:none; }
+    .quiz-wrap { max-width: 640px; margin: 0 auto; }
+    .progress-thin { height: 12px; border-radius: 10px; background:#e8e8e8; }
+    .progress-thin .bar { background:#58CC02; height:100%; border-radius:10px; transition:width .3s; }
+    .q-box { background:#fff; border-radius:20px; padding:32px; box-shadow:0 4px 20px rgba(0,0,0,0.06); }
+    .q-text { font-size:1.4rem; font-weight:800; color:#333; margin-bottom:20px; }
+    .opt-btn { display:block; width:100%; border:2px solid #e0e0e0; border-radius:14px; padding:15px; margin-bottom:10px; background:#fff; font-weight:600; font-size:1.05rem; text-align:left; transition:.12s; }
+    .opt-btn:hover:not(:disabled) { border-color:#58CC02; background:#f0fff0; }
+    .opt-btn.correct { border-color:#58CC02; background:#d7ffcc; }
+    .opt-btn.wrong { border-color:#ff4b4b; background:#ffe0e0; }
+    .feedback { font-weight:800; font-size:1.1rem; min-height:28px; margin-top:12px; text-align:center; }
 </style>
 {% endblock %}
 {% block content %}
-<div class="container py-5" style="max-width: 760px;">
-    <a href="/quiz/" class="btn btn-outline-eng mb-3">← Quizlar</a>
-    <h2 class="fw-bold mb-1" style="color:#58CC02;">{{ quiz.title }}</h2>
-    <p class="text-muted">{{ quiz.description }}</p>
-
-    <form method="post">
-        {% csrf_token %}
-        {% for question in questions %}
-        <div class="q-card">
-            <h5 class="fw-bold mb-3">{{ forloop.counter }}. {{ question.text }}</h5>
-            {% for choice in question.choices.all %}
-                <input class="choice-input" type="radio" name="question_{{ question.id }}"
-                       id="c{{ choice.id }}" value="{{ choice.id }}" required>
-                <label class="choice-label" for="c{{ choice.id }}">{{ choice.text }}</label>
-            {% endfor %}
+<div class="container py-5">
+    <div class="quiz-wrap">
+        <a href="/quiz/" class="btn btn-outline-eng mb-3">← Homework</a>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="fw-bold mb-0">{{ quiz.title }}</h5>
+            <span class="text-muted" id="counter">0 / 0</span>
         </div>
-        {% empty %}
-        <p class="text-muted">Bu quizda hali savollar yo'q.</p>
-        {% endfor %}
+        <div class="progress-thin mb-4"><div class="bar" id="bar" style="width:0%"></div></div>
 
-        {% if questions %}
-        <button type="submit" class="btn btn-eng btn-lg w-100">Yakunlash ✅</button>
-        {% endif %}
-    </form>
+        <div class="q-box">
+            <div id="stage"></div>
+            <div class="feedback" id="feedback"></div>
+            <div class="text-center mt-3" id="nextWrap" style="display:none;">
+                <button class="btn btn-eng btn-lg px-5" id="nextBtn">Keyingi →</button>
+            </div>
+        </div>
+
+        <form method="post" id="quizForm" style="display:none;">
+            {% csrf_token %}
+            <div id="answers"></div>
+        </form>
+    </div>
 </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const QUESTIONS = [
+  {% for q in questions %}
+  { id: {{ q.id }}, text: "{{ q.text|escapejs }}", choices: [
+      {% for c in q.choices.all %}{ id: {{ c.id }}, text: "{{ c.text|escapejs }}", correct: {{ c.is_correct|yesno:"true,false" }} }{% if not forloop.last %},{% endif %}{% endfor %}
+  ]}{% if not forloop.last %},{% endif %}
+  {% endfor %}
+];
+
+let idx = 0, score = 0;
+const stage = document.getElementById('stage');
+const feedback = document.getElementById('feedback');
+const nextWrap = document.getElementById('nextWrap');
+const counter = document.getElementById('counter');
+const bar = document.getElementById('bar');
+const answers = document.getElementById('answers');
+
+function render() {
+    feedback.innerHTML = ''; nextWrap.style.display = 'none';
+    counter.textContent = idx + ' / ' + QUESTIONS.length;
+    bar.style.width = (idx / QUESTIONS.length * 100) + '%';
+    if (idx >= QUESTIONS.length) return finish();
+    const q = QUESTIONS[idx];
+    let opts = q.choices.map(c => `<button class="opt-btn" data-id="${c.id}" data-correct="${c.correct}">${c.text}</button>`).join('');
+    stage.innerHTML = `<div class="q-text">${idx+1}. ${q.text}</div>${opts}`;
+    document.querySelectorAll('.opt-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.opt-btn').forEach(b => b.disabled = true);
+            const isCorrect = btn.dataset.correct === 'true';
+            if (isCorrect) { btn.classList.add('correct'); feedback.innerHTML = "✅ To'g'ri!"; feedback.style.color = '#58CC02'; score++; }
+            else {
+                btn.classList.add('wrong'); feedback.innerHTML = "❌ Noto'g'ri"; feedback.style.color = '#ff4b4b';
+                document.querySelectorAll('.opt-btn').forEach(b => { if (b.dataset.correct === 'true') b.classList.add('correct'); });
+            }
+            const inp = document.createElement('input');
+            inp.type = 'hidden'; inp.name = 'question_' + q.id; inp.value = btn.dataset.id;
+            answers.appendChild(inp);
+            nextWrap.style.display = 'block';
+        };
+    });
+}
+
+document.getElementById('nextBtn').onclick = () => { idx++; render(); };
+
+function finish() {
+    bar.style.width = '100%';
+    stage.innerHTML = `<div class="text-center"><div style="font-size:3.5rem;">🎉</div>
+        <h3 class="fw-bold" style="color:#58CC02;">Tugadi!</h3>
+        <p class="fs-5">${score} / ${QUESTIONS.length} to'g'ri</p>
+        <p class="text-muted">Natija saqlanmoqda...</p></div>`;
+    document.getElementById('quizForm').submit();
+}
+
+if (QUESTIONS.length === 0) {
+    stage.innerHTML = '<p class="text-muted text-center">Bu testda savol yo\'q.</p>';
+} else { render(); }
+</script>
 {% endblock %}

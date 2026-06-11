@@ -16,6 +16,38 @@ def lesson_list(request, level_code):
     return render(request, 'lessons/lesson_list.html', {'level': level, 'lessons': lessons})
 
 
+def level_hub(request, level_code):
+    """Englify uslubidagi daraja hub'i: Vocabulary / Video / Homework."""
+    level = get_object_or_404(Level, code=level_code)
+    total_lessons = level.lessons.count()
+    vocab_pct = video_pct = homework_pct = 0
+
+    if request.user.is_authenticated:
+        watched = LessonCompletion.objects.filter(
+            user=request.user, lesson__level=level, video_watched=True).count()
+        video_pct = round(watched / total_lessons * 100) if total_lessons else 0
+
+        from vocabulary.models import Word, WordProgress
+        total_words = Word.objects.filter(level=level).count()
+        learned = WordProgress.objects.filter(
+            user=request.user, coins_awarded=True, word__level=level).count()
+        vocab_pct = round(learned / total_words * 100) if total_words else 0
+
+        from quiz.models import Quiz, QuizAttempt
+        pcts = []
+        for q in Quiz.objects.filter(level=level):
+            best = 0
+            for a in QuizAttempt.objects.filter(user=request.user, quiz=q):
+                best = max(best, a.percentage())
+            pcts.append(best)
+        homework_pct = round(sum(pcts) / len(pcts)) if pcts else 0
+
+    return render(request, 'lessons/level_hub.html', {
+        'level': level, 'vocab_pct': vocab_pct,
+        'video_pct': video_pct, 'homework_pct': homework_pct,
+    })
+
+
 def lesson_detail(request, pk):
     from quiz.models import Quiz
     lesson = get_object_or_404(Lesson, pk=pk)
