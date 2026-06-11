@@ -4,8 +4,16 @@ from lessons.models import Level, Lesson
 
 
 class Quiz(models.Model):
+    CATEGORY_CHOICES = [
+        ('Grammar', 'Grammar'),
+        ('Reading', 'Reading'),
+        ('Writing', 'Writing'),
+        ('Listening', 'Listening'),
+        ('Vocabulary', 'Vocabulary'),
+    ]
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='Grammar')
     level = models.ForeignKey(Level, on_delete=models.CASCADE, related_name='quizzes', null=True, blank=True)
     lesson = models.ForeignKey(Lesson, on_delete=models.SET_NULL, related_name='quizzes', null=True, blank=True)
     coin_reward = models.IntegerField(default=20, help_text="Quizni birinchi marta yechganda beriladigan coin")

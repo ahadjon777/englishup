@@ -5,7 +5,11 @@
   .ex-card { background:#fff; border:2px solid #eee; border-radius:18px; padding:22px; transition:.15s; height:100%; text-decoration:none; color:#333; display:block; }
   .ex-card:hover { border-color:#58CC02; transform:translateY(-3px); box-shadow:0 6px 18px rgba(0,0,0,.06); color:#333; }
   .tag { border-radius:50px; padding:4px 14px; font-weight:700; font-size:.8rem; color:#fff; display:inline-block; }
-  .tag-grammar { background:#ff9600; }
+  .tag-Grammar { background:#ff9600; }
+  .tag-Reading { background:#1cb0f6; }
+  .tag-Writing { background:#a560f0; }
+  .tag-Listening { background:#ff4b8b; }
+  .tag-Vocabulary { background:#9385e8; }
   .tag-level { background:#58CC02; }
   .coin-pill { background:#fff3cd; color:#8a6d00; border-radius:50px; padding:3px 12px; font-weight:800; font-size:.85rem; }
   .ex-title { font-weight:800; font-size:1.05rem; margin:14px 0; color:#222; }
@@ -24,7 +28,7 @@
             <a href="/quiz/{{ quiz.id }}/" class="ex-card">
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="d-flex gap-2 flex-wrap">
-                        <span class="tag tag-grammar">Grammar</span>
+                        <span class="tag tag-{{ quiz.category }}">{{ quiz.category }}</span>
                         {% if quiz.level %}<span class="tag tag-level">{{ quiz.level.code }}</span>{% endif %}
                     </div>
                     <span class="coin-pill"><i class="fa-solid fa-coins"></i> {{ quiz.coin_reward }}</span>

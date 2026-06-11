@@ -389,6 +389,9 @@ class Command(BaseCommand):
 
         a1 = levels['A1']
 
+        # Har bir A1 darsiga namunaviy video (admin paneldan o'zgartirish mumkin)
+        SAMPLE_VIDEO = 'https://www.youtube.com/watch?v=hSU3lUg8Z2g'
+
         # Grammar lessons
         lessons_by_title = {}
         lesson_count = 0
@@ -399,9 +402,14 @@ class Command(BaseCommand):
                     'description': g['desc'],
                     'grammar_explanation': g['grammar'],
                     'examples': g['examples'],
+                    'youtube_url': SAMPLE_VIDEO,
                     'order': i,
                 },
             )
+            # mavjud darsda video bo'lmasa, namunaviy video qo'yamiz
+            if not created and not lesson.youtube_url:
+                lesson.youtube_url = SAMPLE_VIDEO
+                lesson.save()
             lessons_by_title[g['title']] = lesson
             lesson_count += 1 if created else 0
         self.stdout.write(self.style.SUCCESS(f"A1 grammar darslar: {lesson_count} ta yangi qo'shildi"))

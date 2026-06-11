@@ -19,22 +19,39 @@
     </div>
 
     <div class="row g-3">
-        {% for lesson in lessons %}
+        {% for item in lesson_data %}
         <div class="col-12">
-            <a href="/lessons/lesson/{{ lesson.pk }}/" class="lesson-card p-3">
+            {% if item.unlocked %}
+            <a href="/lessons/lesson/{{ item.lesson.pk }}/" class="lesson-card p-3">
                 <div class="d-flex align-items-center gap-3">
                     <div class="lesson-number">{{ forloop.counter }}</div>
                     <div class="flex-grow-1">
-                        <h5 class="mb-0 fw-bold">{{ lesson.title }}</h5>
-                        <small class="text-muted">{{ lesson.description }}</small>
+                        <h5 class="mb-0 fw-bold">{{ item.lesson.title }}</h5>
+                        <small class="text-muted">{{ item.lesson.description }}</small>
                     </div>
+                    {% if item.done %}<span class="badge bg-success">✓ Tugatilgan</span>{% endif %}
                     <span style="color:#58CC02; font-weight:800; font-size:1.4rem;">→</span>
                 </div>
             </a>
+            {% else %}
+            <div class="lesson-card p-3" style="opacity:.55; cursor:not-allowed; background:#f3f3f3;" title="Avval oldingi darsni tugating">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="lesson-number" style="background:#bbb;">{{ forloop.counter }}</div>
+                    <div class="flex-grow-1">
+                        <h5 class="mb-0 fw-bold text-muted">{{ item.lesson.title }}</h5>
+                        <small class="text-muted">Oldingi darsning homeworkini tugating</small>
+                    </div>
+                    <span style="font-size:1.4rem;">🔒</span>
+                </div>
+            </div>
+            {% endif %}
         </div>
         {% empty %}
         <div class="col-12 text-center"><p class="text-muted">Bu darajada hali dars yo'q.</p></div>
         {% endfor %}
     </div>
+    {% if is_admin %}
+    <p class="text-center text-muted mt-3"><small>👑 Admin: barcha darslar ochiq</small></p>
+    {% endif %}
 </div>
 {% endblock %}

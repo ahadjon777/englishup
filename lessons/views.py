@@ -1,7 +1,8 @@
 import json
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from .models import Level, Lesson, LessonCompletion
 
 
@@ -10,10 +11,48 @@ def level_list(request):
     return render(request, 'lessons/level_list.html', {'levels': levels})
 
 
+def _lesson_completed(user, lesson):
+    """Dars tugaganmi: shu darsning barcha homework testlari yechilgan."""
+    from quiz.models import QuizAttempt
+    quizzes = list(lesson.quizzes.all())
+    if not quizzes:
+        return True  # homework bo'lmasa, ochiq hisoblanadi
+    attempted = set(QuizAttempt.objects.filter(
+        user=user, quiz__in=quizzes).values_list('quiz_id', flat=True))
+    return all(q.id in attempted for q in quizzes)
+
+
+def _lesson_unlocked(user, lesson):
+    """Dars ochiqmi: admin -> doim ochiq; aks holda oldingi dars tugagan bo'lsa."""
+    if user.is_authenticated and user.is_staff:
+        return True
+    prev = Lesson.objects.filter(level=lesson.level, order__lt=lesson.order).order_by('-order').first()
+    if prev is None:
+        return True  # birinchi dars doim ochiq
+    if not user.is_authenticated:
+        return False
+    return _lesson_completed(user, prev)
+
+
 def lesson_list(request, level_code):
     level = get_object_or_404(Level, code=level_code)
-    lessons = level.lessons.all()
-    return render(request, 'lessons/lesson_list.html', {'level': level, 'lessons': lessons})
+    lessons = list(level.lessons.all())
+    is_admin = request.user.is_authenticated and request.user.is_staff
+
+    lesson_data = []
+    prev_done = True  # birinchi dars uchun
+    for lesson in lessons:
+        unlocked = is_admin or prev_done
+        done = False
+        if request.user.is_authenticated:
+            done = _lesson_completed(request.user, lesson)
+        lesson_data.append({'lesson': lesson, 'unlocked': unlocked, 'done': done})
+        # keyingi dars uchun: shu dars tugaganmi?
+        prev_done = done if request.user.is_authenticated else False
+
+    return render(request, 'lessons/lesson_list.html', {
+        'level': level, 'lesson_data': lesson_data, 'is_admin': is_admin,
+    })
 
 
 def level_hub(request, level_code):
@@ -50,6 +89,11 @@ def level_hub(request, level_code):
 
 def lesson_detail(request, pk):
     lesson = get_object_or_404(Lesson, pk=pk)
+    # Ketma-ketlik: oldingi dars tugamasa, bloklanadi (admin bundan mustasno)
+    if not _lesson_unlocked(request.user, lesson):
+        messages.warning(request, "🔒 Avval oldingi darsning homeworkini tugating!")
+        return redirect('lesson_list', level_code=lesson.level.code)
+
     watched = False
     if request.user.is_authenticated:
         watched = LessonCompletion.objects.filter(
