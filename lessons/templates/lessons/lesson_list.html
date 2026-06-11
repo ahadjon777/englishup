@@ -1,81 +1,57 @@
- <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EnglishUp - {{ level.name }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background: #f0f9f0; }
-        .lesson-card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            transition: transform 0.2s;
-        }
-        .lesson-card:hover { transform: translateY(-3px); }
-        .lesson-number {
-            background: #58CC02;
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            flex-shrink: 0;
-        }
-        .btn-lesson {
-            background: #58CC02;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            padding: 6px 20px;
-            font-weight: bold;
-        }
-        .btn-lesson:hover { background: #46a302; color: white; }
-        .level-header {
-            background: #58CC02;
-            color: white;
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container py-5">
-        <div class="level-header text-center">
-            <div style="font-size: 3rem;">{{ level.icon }}</div>
-            <h2 class="fw-bold">{{ level.name }}</h2>
-            <p>{{ level.description }}</p>
-        </div>
+{% extends 'base.html' %}
+{% block title %}{{ level.name }} - EnglishUp{% endblock %}
+{% block extra_css %}
+<style>
+    .lesson-card { border:2px solid #eee; border-radius:16px; box-shadow:0 4px 15px rgba(0,0,0,0.05); transition:.15s; text-decoration:none; color:#333; display:block; }
+    .lesson-card:hover { transform:translateY(-3px); border-color:#58CC02; color:#333; }
+    .lesson-number { background:#58CC02; color:#fff; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; flex-shrink:0; font-size:1.1rem; }
+    .level-header { background:linear-gradient(135deg,#58CC02,#2d8a00); color:#fff; border-radius:20px; padding:30px; margin-bottom:25px; text-align:center; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width:900px;">
+    <a href="/lessons/" class="btn btn-outline-eng mb-4">← Darajalar</a>
 
-        <a href="/lessons/" class="btn btn-outline-secondary mb-4">← Back to Levels</a>
+    <div class="level-header">
+        <div style="font-size:3rem;">{{ level.icon }}</div>
+        <h2 class="fw-bold mb-0">{{ level.name }}</h2>
+        <p class="mb-0" style="opacity:.9;">{{ lessons.count }} ta dars</p>
+    </div>
 
-        <div class="row g-3">
-            {% for lesson in lessons %}
-            <div class="col-12">
-                <div class="card lesson-card p-3">
-                    <div class="card-body d-flex align-items-center justify-content-between">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="lesson-number">{{ forloop.counter }}</div>
-                            <div>
-                                <h5 class="mb-0 fw-bold">{{ lesson.title }}</h5>
-                                <small class="text-muted">{{ lesson.description }}</small>
-                            </div>
-                        </div>
-                        <a href="/lessons/lesson/{{ lesson.pk }}/" class="btn btn-lesson">Start</a>
+    <div class="row g-3">
+        {% for item in lesson_data %}
+        <div class="col-12">
+            {% if item.unlocked %}
+            <a href="/lessons/lesson/{{ item.lesson.pk }}/" class="lesson-card p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="lesson-number">{{ forloop.counter }}</div>
+                    <div class="flex-grow-1">
+                        <h5 class="mb-0 fw-bold">{{ item.lesson.title }}</h5>
+                        <small class="text-muted">{{ item.lesson.description }}</small>
                     </div>
+                    {% if item.done %}<span class="badge bg-success">✓ Tugatilgan</span>{% endif %}
+                    <span style="color:#58CC02; font-weight:800; font-size:1.4rem;">→</span>
+                </div>
+            </a>
+            {% else %}
+            <div class="lesson-card p-3" style="opacity:.55; cursor:not-allowed; background:#f3f3f3;" title="Avval oldingi darsni tugating">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="lesson-number" style="background:#bbb;">{{ forloop.counter }}</div>
+                    <div class="flex-grow-1">
+                        <h5 class="mb-0 fw-bold text-muted">{{ item.lesson.title }}</h5>
+                        <small class="text-muted">Oldingi darsning homeworkini tugating</small>
+                    </div>
+                    <span style="font-size:1.4rem;">🔒</span>
                 </div>
             </div>
-            {% empty %}
-            <div class="col-12 text-center">
-                <p class="text-muted">No lessons yet for this level.</p>
-            </div>
-            {% endfor %}
+            {% endif %}
         </div>
+        {% empty %}
+        <div class="col-12 text-center"><p class="text-muted">Bu darajada hali dars yo'q.</p></div>
+        {% endfor %}
     </div>
-</body>
-</html>
+    {% if is_admin %}
+    <p class="text-center text-muted mt-3"><small>👑 Admin: barcha darslar ochiq</small></p>
+    {% endif %}
+</div>
+{% endblock %}

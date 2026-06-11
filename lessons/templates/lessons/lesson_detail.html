@@ -1,256 +1,130 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EnglishUp - {{ lesson.title }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background: #f0f9f0; font-family: 'Segoe UI', sans-serif; }
-        .lesson-header {
-            background: linear-gradient(135deg, #58CC02 0%, #2d8a00 100%);
-            color: white;
-            padding: 50px 20px;
-            text-align: center;
-        }
-        .level-pill {
-            background: rgba(255,255,255,0.25);
-            border-radius: 50px;
-            padding: 6px 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            display: inline-block;
-            margin-bottom: 15px;
-        }
-        .progress-section {
-            background: white;
-            padding: 12px 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        .progress { height: 10px; border-radius: 10px; background: #e8e8e8; }
-        .progress-bar { background: #58CC02; border-radius: 10px; }
-        .outer-col {
-            display: flex;
-            flex-direction: column;
-        }
-        .main-card {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        .grammar-rows {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .grammar-row-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            flex: 1;
-        }
-        .section-head {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .section-head .icon {
-            background: #58CC02;
-            color: white;
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .grammar-block {
-            border-radius: 14px;
-            padding: 18px 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .grammar-block.green { background: #f0fff0; border-left: 4px solid #58CC02; }
-        .grammar-block.blue { background: #f0f8ff; border-left: 4px solid #1cb0f6; }
-        .grammar-block.orange { background: #fff8f0; border-left: 4px solid #ff9600; }
-        .grammar-block.red { background: #fff0f0; border-left: 4px solid #ff4b4b; }
-        .grammar-block h6 { font-weight: 700; margin-bottom: 10px; }
-        .grammar-block.green h6 { color: #2d8a00; }
-        .grammar-block.blue h6 { color: #0a8fd4; }
-        .grammar-block.orange h6 { color: #cc7700; }
-        .grammar-block.red h6 { color: #cc0000; }
-        .grammar-block p { font-size: 0.92rem; line-height: 1.8; margin: 0; }
-        .right-col {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .examples-card {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-            flex: 1;
-        }
-        .example-item {
-            background: #f8fff8;
-            border-radius: 12px;
-            padding: 12px 18px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: transform 0.2s;
-        }
-        .example-item:hover { transform: translateX(5px); }
-        .example-num {
-            background: #58CC02;
-            color: white;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.8rem;
-            flex-shrink: 0;
-        }
-        .ai-practice {
-            background: linear-gradient(135deg, #1cb0f6, #0a8fd4);
-            border-radius: 20px;
-            padding: 30px;
-            color: white;
-            text-align: center;
-        }
-        .btn-ai {
-            background: white;
-            color: #1cb0f6;
-            border: none;
-            border-radius: 25px;
-            padding: 12px 35px;
-            font-weight: 700;
-            font-size: 1rem;
-        }
-        .btn-ai:hover { transform: scale(1.05); color: #1cb0f6; }
-        .back-btn {
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 25px;
-            padding: 8px 20px;
-            color: #666;
-            text-decoration: none;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            margin: 20px 0;
-        }
-        .back-btn:hover { border-color: #58CC02; color: #58CC02; }
-        .two-col {
-            display: grid;
-            grid-template-columns: 7fr 5fr;
-            gap: 20px;
-            align-items: stretch;
-        }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}{{ lesson.title }} - EnglishUp{% endblock %}
+{% block extra_css %}
+<style>
+  .lesson-hero { background: linear-gradient(135deg,#58CC02,#2d8a00); color:#fff; border-radius:20px; padding:32px; }
+  .lesson-hero .pill { background:rgba(255,255,255,.2); border-radius:50px; padding:5px 16px; font-weight:600; font-size:.85rem; }
+  .card-soft { background:#fff; border-radius:18px; box-shadow:0 4px 18px rgba(0,0,0,.05); padding:24px; }
+  .sec-title { font-weight:800; color:#333; display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .sec-title .ic { width:36px;height:36px;border-radius:10px;background:#58CC02;color:#fff;display:flex;align-items:center;justify-content:center; }
+  .grammar-text { line-height:1.9; color:#444; white-space:pre-line; }
+  .example-item { background:#f6fff2; border-left:4px solid #58CC02; border-radius:10px; padding:12px 16px; margin-bottom:10px; }
+  .link-row { display:flex; justify-content:space-between; align-items:center; background:#58CC02; color:#fff; border-radius:14px; padding:14px 18px; margin-bottom:10px; font-weight:700; text-decoration:none; }
+  .link-row:hover { background:#46a302; color:#fff; }
+  .vocab-row { background:#a99bf5; }
+  .vocab-row:hover { background:#9385e8; }
+  .ai-cta { background:linear-gradient(135deg,#1cb0f6,#0a8fd4); color:#fff; border-radius:18px; padding:24px; text-align:center; }
+  .btn-white { background:#fff; color:#1cb0f6; border:none; border-radius:25px; padding:10px 28px; font-weight:700; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:1050px;">
+  <a href="/lessons/{{ lesson.level.code }}/" class="btn btn-outline-eng mb-3">← Darslar</a>
 
-    <div class="lesson-header">
-        <div class="level-pill">{{ lesson.level.code }} — {{ lesson.level.name }}</div>
-        <h1 class="fw-bold mb-2">{{ lesson.title }}</h1>
-        <p class="mb-0" style="opacity:0.85;">{{ lesson.description }}</p>
+  <div class="lesson-hero mb-4">
+    <span class="pill">{{ lesson.level.code }} — {{ lesson.level.name }}</span>
+    <h1 class="fw-bold mt-3 mb-1">{{ lesson.title }}</h1>
+    <p class="mb-0" style="opacity:.9;">{{ lesson.description }}</p>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      {% if lesson.grammar_explanation %}
+      <div class="card-soft mb-4">
+        <div class="sec-title"><span class="ic">📖</span> Grammatika</div>
+        <div class="grammar-text">{{ lesson.grammar_explanation }}</div>
+      </div>
+      {% endif %}
+
+      {% if lesson.examples %}
+      <div class="card-soft">
+        <div class="sec-title"><span class="ic">✏️</span> Misollar</div>
+        {% for example in lesson.examples.splitlines %}
+          {% if example %}<div class="example-item">{{ example }}</div>{% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
     </div>
 
-    <div class="progress-section">
-        <div class="d-flex justify-content-between mb-1">
-            <small class="text-muted">Lesson Progress</small>
-            <small class="text-success fw-bold">In Progress</small>
+    <div class="col-lg-5">
+      <!-- VIDEO -->
+      {% if lesson.youtube_embed_url %}
+      <div class="card-soft mb-4">
+        <div class="sec-title"><span class="ic">🎬</span> Video dars</div>
+        <div class="ratio ratio-16x9" style="border-radius:12px;overflow:hidden;">
+          <iframe src="{{ lesson.youtube_embed_url }}" frameborder="0" allowfullscreen></iframe>
         </div>
-        <div class="progress">
-            <div class="progress-bar" style="width: 35%"></div>
+        <div class="text-center mt-3">
+          {% if user.is_authenticated %}
+            {% if watched %}
+              <button class="btn btn-outline-eng" disabled>✅ Ko'rilgan</button>
+            {% else %}
+              <button class="btn btn-eng" id="watchBtn" data-id="{{ lesson.id }}"><i class="fa-solid fa-coins"></i> Videoni ko'rdim (+{{ lesson.video_coin_reward }})</button>
+            {% endif %}
+            <div id="watchMsg" class="mt-2 fw-bold" style="color:#caa300;"></div>
+          {% else %}
+            <a href="/users/login/" class="btn btn-outline-eng">Coin olish uchun kiring</a>
+          {% endif %}
         </div>
+      </div>
+      {% endif %}
+
+      <!-- VOCABULARY -->
+      <div class="card-soft mb-4">
+        <div class="sec-title"><span class="ic">📖</span> Vocabulary</div>
+        {% if vocab_count %}
+          <p class="text-muted small mb-2">Bu mavzuga oid {{ vocab_count }} ta so'z</p>
+          <a href="/vocabulary/lesson/{{ lesson.id }}/all/" class="link-row vocab-row">
+            <span>🔥 So'zlarni o'rganish</span><span>→</span>
+          </a>
+        {% else %}
+          <p class="text-muted small mb-0">Bu darsga hali so'z biriktirilmagan.</p>
+        {% endif %}
+      </div>
+
+      <!-- HOMEWORK -->
+      <div class="card-soft mb-4">
+        <div class="sec-title"><span class="ic">📝</span> Homework</div>
+        {% if homework %}
+          {% for q in homework %}
+          <a href="/quiz/{{ q.id }}/" class="link-row">
+            <span><span style="background:rgba(255,255,255,.3);border-radius:50px;padding:2px 10px;font-size:.75rem;margin-right:6px;">{{ q.category }}</span>{{ q.title }}</span>
+            <span><i class="fa-solid fa-coins"></i> {{ q.coin_reward }}</span>
+          </a>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted small mb-0">Bu darsga hali homework biriktirilmagan.</p>
+        {% endif %}
+      </div>
+
+      <!-- AI -->
+      <div class="ai-cta">
+        <div style="font-size:2.2rem;">🤖</div>
+        <h6 class="fw-bold mt-2">AI bilan mashq!</h6>
+        <a href="/users/chatbot/" class="btn btn-white mt-2">Boshlash →</a>
+      </div>
     </div>
-
-    <div class="container py-4" style="max-width: 1100px;">
-
-        <a href="/lessons/{{ lesson.level.code }}/" class="back-btn">← Back to Lessons</a>
-
-        <div class="two-col">
-
-            <!-- LEFT: Grammar -->
-            <div class="outer-col">
-                {% if lesson.grammar_explanation %}
-                <div class="main-card">
-                    <div class="section-head">
-                        <div class="icon">📖</div> Grammar Explanation
-                    </div>
-                    <div class="grammar-rows">
-                        <div class="grammar-block green">
-                            <h6>📌 When to use</h6>
-                            <p>{{ lesson.grammar_explanation|truncatewords:40 }}</p>
-                        </div>
-                        <div class="grammar-row-2">
-                            <div class="grammar-block blue">
-                                <h6>✅ Positive</h6>
-                                <p>I/You/We/They + verb<br>He/She/It + verb + s/es</p>
-                            </div>
-                            <div class="grammar-block orange">
-                                <h6>❌ Negative</h6>
-                                <p>I/You/We/They + don't + verb<br>He/She/It + doesn't + verb</p>
-                            </div>
-                            <div class="grammar-block red">
-                                <h6>❓ Question</h6>
-                                <p>Do + I/You/We/They + verb?<br>Does + He/She/It + verb?</p>
-                            </div>
-                            <div class="grammar-block green">
-                                <h6>⚠️ Common Mistakes</h6>
-                                <p>❌ She work every day.<br>✅ She works every day.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- RIGHT: Examples + AI -->
-            <div class="right-col">
-                {% if lesson.examples %}
-                <div class="examples-card">
-                    <div class="section-head">
-                        <div class="icon">✏️</div> Examples
-                    </div>
-                    {% for example in lesson.examples.splitlines %}
-                        {% if example %}
-                        <div class="example-item">
-                            <div class="example-num">{{ forloop.counter }}</div>
-                            <div>{{ example }}</div>
-                        </div>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-                {% endif %}
-
-                <div class="ai-practice">
-                    <div style="font-size: 2.5rem;">🤖</div>
-                    <h5 class="fw-bold mt-2">Practice with AI!</h5>
-                    <p style="opacity:0.85;" class="mb-3">AI corrects your mistakes and explains why!</p>
-                    <a href="/users/chatbot/" class="btn btn-ai">Start AI Practice →</a>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</body>
-</html>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  const watchBtn = document.getElementById('watchBtn');
+  if (watchBtn) {
+    watchBtn.addEventListener('click', function () {
+      fetch('/lessons/lesson/' + watchBtn.dataset.id + '/watched/', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')}
+      }).then(r=>r.json()).then(data=>{
+        if(data.ok){
+          watchBtn.disabled=true; watchBtn.textContent="✅ Ko'rilgan";
+          const badge=document.querySelector('.coin-badge');
+          if(badge) badge.innerHTML='<i class="fa-solid fa-coins"></i> '+data.coins;
+          if(data.awarded>0) document.getElementById('watchMsg').textContent='+'+data.awarded+' coin topdingiz!';
+        }
+      });
+    });
+  }
+  function getCookie(name){let v=null;if(document.cookie){document.cookie.split(';').forEach(c=>{c=c.trim();if(c.startsWith(name+'=')) v=decodeURIComponent(c.substring(name.length+1));});}return v;}
+</script>
+{% endblock %}

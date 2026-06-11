@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Natija - {{ quiz.title }}{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width: 760px;">
+    <div class="card border-0 shadow-sm text-center mb-4" style="border-radius: 20px;">
+        <div class="card-body p-5">
+            {% if percentage >= 80 %}
+                <div style="font-size: 4rem;">🏆</div>
+                <h2 class="fw-bold text-success">Ajoyib!</h2>
+            {% elif percentage >= 50 %}
+                <div style="font-size: 4rem;">👍</div>
+                <h2 class="fw-bold" style="color:#58CC02;">Yaxshi!</h2>
+            {% else %}
+                <div style="font-size: 4rem;">💪</div>
+                <h2 class="fw-bold text-warning">Yana harakat qiling!</h2>
+            {% endif %}
+            <p class="fs-4 mb-1">{{ score }} / {{ total }} to'g'ri ({{ percentage }}%)</p>
+            {% if first_time and coins_awarded > 0 %}
+                <div class="coin-badge fs-5 my-2"><i class="fa-solid fa-coins"></i> +{{ coins_awarded }} coin topdingiz!</div>
+            {% elif not first_time %}
+                <p class="text-muted">Bu quizni avval yechgansiz — coin faqat birinchi marta beriladi.</p>
+            {% endif %}
+            <div class="mt-3 d-flex gap-2 justify-content-center">
+                <a href="/quiz/" class="btn btn-outline-eng">Quizlar</a>
+                <a href="/quiz/{{ quiz.id }}/" class="btn btn-eng">Qayta yechish</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Javoblar tahlili -->
+    <h5 class="fw-bold mb-3">📋 Javoblaringiz</h5>
+    {% for r in results %}
+    <div class="card border-0 shadow-sm mb-2" style="border-radius:14px;">
+        <div class="card-body">
+            <p class="fw-bold mb-2">{{ forloop.counter }}. {{ r.question.text }}</p>
+            {% for choice in r.question.choices.all %}
+                <div class="px-3 py-2 mb-1 rounded
+                    {% if choice.id == r.correct_id %}bg-success-subtle border border-success{% elif choice.id == r.selected_id %}bg-danger-subtle border border-danger{% endif %}">
+                    {{ choice.text }}
+                    {% if choice.id == r.correct_id %}<span class="text-success fw-bold">✓ To'g'ri</span>{% endif %}
+                    {% if choice.id == r.selected_id and not r.is_correct %}<span class="text-danger fw-bold">✗ Sizning javobingiz</span>{% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

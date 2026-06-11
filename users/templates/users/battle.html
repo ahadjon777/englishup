@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}AI Battle - EnglishUp{% endblock %}
+{% block extra_css %}
+<style>
+    .battle-wrap { max-width: 640px; margin: 0 auto; }
+    .cat-card { border:2px solid #e0e0e0; border-radius:18px; padding:30px; cursor:pointer; transition:0.15s; text-align:center; background:#fff; }
+    .cat-card:hover { border-color:#58CC02; background:#f0fff0; transform:translateY(-4px); }
+    .q-box { background:#fff; border-radius:20px; padding:32px; box-shadow:0 4px 20px rgba(0,0,0,0.06); }
+    .q-text { font-size:1.3rem; font-weight:700; color:#333; line-height:1.6; }
+    .battle-input { border:2px solid #58CC02; border-radius:14px; padding:14px; font-size:1.1rem; width:100%; outline:none; }
+    .score-pill { background:#1cb0f6; color:#fff; border-radius:50px; padding:5px 16px; font-weight:800; }
+    .feedback { font-weight:800; font-size:1.1rem; min-height:28px; }
+    .vs { font-size:3rem; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="battle-wrap">
+        <a href="/" class="btn btn-outline-eng mb-3">← Bosh sahifa</a>
+        <div class="text-center mb-4">
+            <div class="vs">⚔️</div>
+            <h1 class="fw-bold" style="color:#58CC02;">AI Battle</h1>
+            <p class="text-muted">AI bilan bellashing! Har bir to'g'ri javob uchun <i class="fa-solid fa-coins"></i> +{{ 3 }} coin</p>
+        </div>
+
+        <!-- Kategoriya tanlash -->
+        <div id="categorySelect">
+            <div class="row g-3">
+                <div class="col-6">
+                    <div class="cat-card" data-cat="vocabulary">
+                        <div style="font-size:3rem;">📖</div>
+                        <h5 class="fw-bold mt-2">Vocabulary</h5>
+                        <p class="text-muted small mb-0">So'z bilimi bo'yicha bellashuv</p>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="cat-card" data-cat="grammar">
+                        <div style="font-size:3rem;">📝</div>
+                        <h5 class="fw-bold mt-2">Grammar</h5>
+                        <p class="text-muted small mb-0">Grammatika bo'yicha bellashuv</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- O'yin maydoni -->
+        <div id="gameArea" style="display:none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="badge" style="background:#58CC02;" id="catLabel"></span>
+                <span class="score-pill">🏆 <span id="score">0</span></span>
+            </div>
+            <div class="q-box">
+                <div class="q-text" id="question">Yuklanmoqda...</div>
+                <input type="text" class="battle-input mt-3" id="answer" placeholder="Javobingizni yozing..." autocomplete="off">
+                <button class="btn btn-eng btn-lg w-100 mt-3" id="submitBtn">Javob berish</button>
+                <div class="feedback text-center mt-3" id="feedback"></div>
+                <div class="text-center" id="nextWrap" style="display:none;">
+                    <button class="btn btn-outline-eng" id="nextBtn">Keyingi savol →</button>
+                    <button class="btn btn-link text-muted" id="quitBtn">Tugatish</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    let category = null, score = 0, currentQuestion = '';
+    const qEl = document.getElementById('question');
+    const ansEl = document.getElementById('answer');
+    const fbEl = document.getElementById('feedback');
+    const submitBtn = document.getElementById('submitBtn');
+    const nextWrap = document.getElementById('nextWrap');
+
+    function getCookie(name){let v=null;if(document.cookie){document.cookie.split(';').forEach(c=>{c=c.trim();if(c.startsWith(name+'=')) v=decodeURIComponent(c.substring(name.length+1));});}return v;}
+
+    document.querySelectorAll('.cat-card').forEach(card => {
+        card.onclick = () => {
+            category = card.dataset.cat;
+            document.getElementById('categorySelect').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'block';
+            document.getElementById('catLabel').textContent = category === 'vocabulary' ? '📖 Vocabulary' : '📝 Grammar';
+            loadQuestion();
+        };
+    });
+
+    function loadQuestion() {
+        qEl.textContent = 'AI savol tayyorlamoqda...';
+        ansEl.value = ''; ansEl.disabled = false;
+        fbEl.innerHTML = ''; nextWrap.style.display = 'none';
+        submitBtn.style.display = 'block'; submitBtn.disabled = false;
+        fetch('/users/battle/new/', {
+            method:'POST',
+            headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+            body: JSON.stringify({category: category})
+        }).then(r=>r.json()).then(data=>{
+            if(data.ok){ currentQuestion = data.question; qEl.textContent = data.question; ansEl.focus(); }
+            else { qEl.textContent = 'Xatolik: ' + (data.error || 'qayta urinib ko\'ring'); }
+        });
+    }
+
+    function submitAnswer() {
+        const answer = ansEl.value.trim();
+        if(!answer) return;
+        submitBtn.disabled = true; ansEl.disabled = true;
+        fbEl.innerHTML = '🤖 AI tekshirmoqda...';
+        fetch('/users/battle/check/', {
+            method:'POST',
+            headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+            body: JSON.stringify({question: currentQuestion, answer: answer})
+        }).then(r=>r.json()).then(data=>{
+            if(!data.ok){ fbEl.textContent = 'Xatolik: ' + (data.error||''); return; }
+            if(data.correct){
+                score++; document.getElementById('score').textContent = score;
+                fbEl.innerHTML = `✅ To'g'ri! ${data.feedback}`;
+                if(data.awarded>0){
+                    fbEl.innerHTML += ` <span style="color:#caa300;">+${data.awarded} <i class="fa-solid fa-coins"></i></span>`;
+                    const badge = document.querySelector('.coin-badge');
+                    if(badge) badge.innerHTML = '<i class="fa-solid fa-coins"></i> ' + data.coins;
+                }
+            } else {
+                fbEl.innerHTML = `❌ ${data.feedback}<br><small class="text-muted">To'g'ri javob: <b style="color:#58CC02;">${data.correct_answer}</b></small>`;
+            }
+            submitBtn.style.display = 'none';
+            nextWrap.style.display = 'block';
+        });
+    }
+
+    submitBtn.onclick = submitAnswer;
+    ansEl.addEventListener('keypress', e => { if(e.key==='Enter') submitAnswer(); });
+    document.getElementById('nextBtn').onclick = loadQuestion;
+    document.getElementById('quitBtn').onclick = () => location.href = '/';
+</script>
+{% endblock %}

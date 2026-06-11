@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}{{ level.name }} - EnglishUp{% endblock %}
+{% block extra_css %}
+<style>
+  .comp-card { border-radius:20px; padding:30px; color:#fff; text-decoration:none; display:block; transition:.15s; }
+  .comp-card:hover { transform:translateY(-4px); color:#fff; box-shadow:0 8px 24px rgba(0,0,0,.12); }
+  .comp-vocab { background:#a99bf5; }
+  .comp-video { background:#7ed492; }
+  .comp-hw { background:#ffa94d; }
+  .comp-title { font-size:1.8rem; font-weight:800; }
+  .comp-pct { font-size:1.8rem; font-weight:800; }
+  .comp-bar { height:10px; border-radius:10px; background:rgba(255,255,255,.4); overflow:hidden; margin-top:12px; }
+  .comp-bar .fill { height:100%; background:#fff; border-radius:10px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width:1000px;">
+  <a href="/lessons/" class="btn btn-outline-eng mb-4">← Darajalar</a>
+  <h1 class="text-center fw-bold mb-5" style="color:#58CC02;">{{ level.icon }} {{ level.name }}</h1>
+  <div class="row g-4">
+    <div class="col-md-6">
+      <a href="/vocabulary/{{ level.code }}/all/" class="comp-card comp-vocab">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="comp-title">📖 Vocabulary</span><span class="comp-pct">{{ vocab_pct }}%</span>
+        </div>
+        <div class="comp-bar"><div class="fill" style="width:{{ vocab_pct }}%"></div></div>
+      </a>
+    </div>
+    <div class="col-md-6">
+      <a href="/lessons/{{ level.code }}/list/" class="comp-card comp-video">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="comp-title">🎬 Video</span><span class="comp-pct">{{ video_pct }}%</span>
+        </div>
+        <div class="comp-bar"><div class="fill" style="width:{{ video_pct }}%"></div></div>
+      </a>
+    </div>
+    <div class="col-md-6">
+      <a href="/quiz/" class="comp-card comp-hw">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="comp-title">📝 Homework</span><span class="comp-pct">{{ homework_pct }}%</span>
+        </div>
+        <div class="comp-bar"><div class="fill" style="width:{{ homework_pct }}%"></div></div>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
